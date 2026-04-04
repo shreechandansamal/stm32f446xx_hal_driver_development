@@ -1,0 +1,36 @@
+# ========================
+# Build folders
+# ========================
+Debug/
+Release/
+build/
+
+# ========================
+# Object / binary files
+# ========================
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+
+# ========================
+# STM32 / GCC extra files
+# ========================
+*.su
+*.cyclo
+
+# ========================
+# Auto-generated makefiles
+# ========================
+subdir.mk
+objects.mk
+sources.mk
+
+# ========================
+# OS junk
+# ========================
+.DS_Store
+Thumbs.db
