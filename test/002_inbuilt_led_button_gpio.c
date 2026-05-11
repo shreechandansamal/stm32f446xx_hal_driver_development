@@ -21,7 +21,7 @@ int main(void){
 
 	GPIO_Handle_t GpioLed, GpioBtn;
 
-	//Push Pull Cofiguration for Led, nothing but we are initializing our custom variables(struct var), you got it right?
+	//Push Pull Configuration for Led, nothing but we are initializing our custom variables(struct var), you got it right?
 	GpioLed.pGPIOx = GPIOA;
 	GpioLed.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_5;
 	GpioLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
@@ -30,7 +30,7 @@ int main(void){
 	GpioLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
 
 	//Enable the Clock for GPIOA
-	GPIO_PeriClockControl(GPIOA, ENABLE);
+//	GPIO_PeriClockControl(GPIOA, ENABLE); //no need, done in the Init itself
 	//Initialize the GPIO LED
 	GPIO_Init(&GpioLed);
 
@@ -43,7 +43,7 @@ int main(void){
 
 
 	//Enable the Clock for GPIOC
-	GPIO_PeriClockControl(GPIOC, ENABLE);
+//	GPIO_PeriClockControl(GPIOC, ENABLE); //no need, done in the Init itself
 	//Initialize the GPIO Button
 	GPIO_Init(&GpioBtn);
 
@@ -55,7 +55,7 @@ int main(void){
 //		}
 
 		if(GPIO_ReadFromInputPin(GPIOC, GPIO_PIN_NO_13) == BTN_PRESSED){
-			delay();//for debounce
+			delay();//for de-bounce
 			GPIO_ToggleOutputPin(GPIOA, GPIO_PIN_NO_5);
 		}
 

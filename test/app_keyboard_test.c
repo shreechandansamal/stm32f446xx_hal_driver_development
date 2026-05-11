@@ -40,7 +40,7 @@ int main(void)
     /* LED (PA5) Init */
     GPIO_Handle_t led;
 
-    GPIO_PeriClockControl(GPIOA, ENABLE);
+//    GPIO_PeriClockControl(GPIOA, ENABLE);// not needed already defined inside the GPIO_Init()
 
     led.pGPIOx = GPIOA;
     led.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_5;

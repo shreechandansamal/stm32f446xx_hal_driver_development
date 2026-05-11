@@ -30,6 +30,12 @@ objects.mk
 sources.mk
 
 # ========================
+# STM32CubeIDE generated files
+# ========================
+*.launch
+.settings/
+
+# ========================
 # OS junk
 # ========================
 .DS_Store

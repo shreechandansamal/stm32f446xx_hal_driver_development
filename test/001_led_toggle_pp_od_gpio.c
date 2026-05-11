@@ -36,7 +36,7 @@ int main(void){
 
 
 	//Enable the Clock for GPIOA
-	GPIO_PeriClockControl(GpioLed.pGPIOx, ENABLE);
+//	GPIO_PeriClockControl(GpioLed.pGPIOx, ENABLE); not needed API called in the Init of the GPIO
 	//Initialize the GPIO
 	GPIO_Init(&GpioLed);
 
