@@ -320,19 +320,40 @@ _Static_assert(sizeof(SYSCFG_RegDef_t) == 0x30, "SYSCFG_RegDef struct size misma
  *********************************************************************/
 typedef struct
 {
-	__IO uint32_t CR1;         /*!< SPI control register 1 (not used in I2S mode)           Address offset:0x00 */
-	__IO uint32_t CR2;         /*!< SPI control register 2                                  Address offset:0x04 */
-	__IO uint32_t SR;          /*!< SPI status register                                     Address offset:0x08 */
-	__IO uint32_t DR;          /*!< SPI data register                                       Address offset:0x0C */
-	__IO uint32_t CRCPR;       /*!< SPI CRC polynomial register (not used in I2S mode)      Address offset:0x10 */
-	__I  uint32_t RXCRCR;      /*!< SPI RX CRC register (not used in I2S mode)              Address offset:0x14 */
-	__I  uint32_t TXCRCR;      /*!< SPI TX CRC register (not used in I2S mode)              Address offset:0x18 */
-	__IO uint32_t I2SCFGR;     /*!< SPI_I2S configuration register                          Address offset:0x1C */
-	__IO uint32_t I2SPR;       /*!< SPI_I2S pre-scaler register                             Address offset:0x20 */
+	__IO uint32_t CR1;         /*!< SPI control register 1 (not used in I2S mode)                Address offset:0x00 */
+	__IO uint32_t CR2;         /*!< SPI control register 2                                       Address offset:0x04 */
+	__IO uint32_t SR;          /*!< SPI status register                                          Address offset:0x08 */
+	__IO uint32_t DR;          /*!< SPI data register                                            Address offset:0x0C */
+	__IO uint32_t CRCPR;       /*!< SPI CRC polynomial register (not used in I2S mode)           Address offset:0x10 */
+	__I  uint32_t RXCRCR;      /*!< SPI RX CRC register (not used in I2S mode)                   Addre     ss offset:0x14 */
+	__I  uint32_t TXCRCR;      /*!< SPI TX CRC register (not used in I2S mode)                   Address offset:0x18 */
+	__IO uint32_t I2SCFGR;     /*!< SPI_I2S configuration register                               Address offset:0x1C */
+	__IO uint32_t I2SPR;       /*!< SPI_I2S pre-scaler register                                  Address offset:0x20 */
 
 }SPI_RegDef_t;
 
 _Static_assert(sizeof(SPI_RegDef_t) == 0x24, "SPI_RegDef struct size mismatch!");
+
+
+
+/*********************************************************************
+ * Peripheral Register Definition Structure for I2C
+ *********************************************************************/
+typedef struct
+{
+	__IO uint32_t CR1;		   /*!< I2C control register 1							           	 Address offset:0x00 */
+	__IO uint32_t CR2;		   /*!< I2C control register 2							           	 Address offset:0x04 */
+	__IO uint32_t OAR1;		   /*!< I2C own address register 1							         Address offset:0x08 */
+	__IO uint32_t OAR2;		   /*!< I2C own address register 2							         Address offset:0x0C */
+	__IO uint32_t DR;		   /*!< I2C data register							         		 Address offset:0x10 */
+	__IO uint32_t SR1;		   /*!< I2C status register 1							         	 Address offset:0x14 */
+	__I  uint32_t SR2;		   /*!< I2C status register 2							         	 Address offset:0x18 */
+	__IO uint32_t CCR;		   /*!< I2C clock control register							         Address offset:0x1C */
+	__IO uint32_t TRISE;	   /*!< I2C TRISE register							         		 Address offset:0x20 */
+	__IO uint32_t FLTR; 	   /*!< I2C FLTR register							         		 Address offset:0x24 */
+}I2C_RegDef_t;
+
+_Static_assert(sizeof(I2C_RegDef_t) == 0x28, "I2C_RegDef struct size mismatch!");
 
 
 
@@ -341,6 +362,10 @@ _Static_assert(sizeof(SPI_RegDef_t) == 0x24, "SPI_RegDef struct size mismatch!")
 /*********************************************************************
  * Peripheral Definitions (Base Address type-casted to xxx_RegDef_t)
  *********************************************************************/
+#define RCC         ((RCC_RegDef_t *)RCC_BASEADDR)
+
+#define SYSCFG 		((SYSCFG_RegDef_t *)SYSCFG_BASEADDR)
+
 #define GPIOA       ((GPIO_RegDef_t *)GPIOA_BASEADDR)
 #define GPIOB       ((GPIO_RegDef_t *)GPIOB_BASEADDR)
 #define GPIOC       ((GPIO_RegDef_t *)GPIOC_BASEADDR)
@@ -350,16 +375,16 @@ _Static_assert(sizeof(SPI_RegDef_t) == 0x24, "SPI_RegDef struct size mismatch!")
 #define GPIOG       ((GPIO_RegDef_t *)GPIOG_BASEADDR)
 #define GPIOH       ((GPIO_RegDef_t *)GPIOH_BASEADDR)
 
-#define RCC         ((RCC_RegDef_t *)RCC_BASEADDR)
-
 #define EXTI 		((EXTI_RegDef_t *)EXTI_BASEADDR)
-
-#define SYSCFG 		((SYSCFG_RegDef_t *)SYSCFG_BASEADDR)
 
 #define SPI1        ((SPI_RegDef_t *)SPI1_BASEADDR)
 #define SPI2        ((SPI_RegDef_t *)SPI2_I2S2_BASEADDR)
 #define SPI3        ((SPI_RegDef_t *)SPI3_I2S3_BASEADDR)
 #define SPI4        ((SPI_RegDef_t *)SPI4_BASEADDR)
+
+#define I2C1		((I2C_RegDef_t *)I2C1_BASEADDR)
+#define I2C2		((I2C_RegDef_t *)I2C2_BASEADDR)
+#define I2C3		((I2C_RegDef_t *)I2C3_BASEADDR)
 
 
 
@@ -717,22 +742,6 @@ _Static_assert(sizeof(SPI_RegDef_t) == 0x24, "SPI_RegDef struct size mismatch!")
 
 
 /*********************************************************************
- * Some Generic Macros
- *********************************************************************/
-#define ENABLE              			1U
-#define DISABLE             			0U
-#define SET                 			ENABLE
-#define RESET               			DISABLE
-#define HIGH							ENABLE
-#define LOW								DISABLE
-#define GPIO_PIN_SET        			SET
-#define GPIO_PIN_RESET      			RESET
-#define FLAG_SET						SET
-#define FLAG_RESET						RESET
-
-
-
-/*********************************************************************
  * Bit Position Definition of SPI Peripheral
  *********************************************************************/
 /*
@@ -779,7 +788,89 @@ _Static_assert(sizeof(SPI_RegDef_t) == 0x24, "SPI_RegDef struct size mismatch!")
 
 
 
+/*********************************************************************
+ * Bit Position Definition of I2C Peripheral
+ *********************************************************************/
+/*
+ * Bit position definition I2C_CR1
+ */
+#define I2C_CR1_PE						0U
+#define I2C_CR1_SMBUS					1U
+#define I2C_CR1_SMBTYPE					3U
+#define I2C_CR1_ENARP					4U
+#define I2C_CR1_ENPEC					5U
+#define I2C_CR1_ENGC					6U
+#define I2C_CR1_NOSTRETCH				7U
+#define I2C_CR1_START					8U
+#define I2C_CR1_STOP					9U
+#define I2C_CR1_ACK 					10U
+#define I2C_CR1_POS 					11U
+#define I2C_CR1_PEC 					12U
+#define I2C_CR1_ALERT					13U
+#define I2C_CR1_SWRST					15U
 
+/*
+ * Bit position definition I2C_CR2
+ */
+#define I2C_CR2_FREQ					0U
+#define I2C_CR2_ITERREN					8U
+#define I2C_CR2_ITEVTEN					9U
+#define I2C_CR2_ITBUFEN					10U
+#define I2C_CR2_DMAEN					11U
+#define I2C_CR2_LAST					12U
+
+/*
+ * Bit position definition I2C_SR1
+ */
+#define I2C_SR1_SB  					0U
+#define I2C_SR1_ADDR  					1U
+#define I2C_SR1_BTF  					2U
+#define I2C_SR1_ADD10  					3U
+#define I2C_SR1_STOPF  					4U
+#define I2C_SR1_RXNE  					6U
+#define I2C_SR1_TXE  					7U
+#define I2C_SR1_BERR  					8U
+#define I2C_SR1_ARLO  					9U
+#define I2C_SR1_AF  					10U
+#define I2C_SR1_OVR  					11U
+#define I2C_SR1_PECERR  				12U
+#define I2C_SR1_TIMEOUT					14U
+#define I2C_SR1_SMBALERT 				15U
+
+/*
+ * Bit position definition I2C_SR2
+ */
+#define I2C_SR2_MSL  					0U
+#define I2C_SR2_BUSY  					1U
+#define I2C_SR2_TRA  					2U
+#define I2C_SR2_GENCALL					4U
+#define I2C_SR2_SMBDEFAULT				5U
+#define I2C_SR2_SMBHOST 				6U
+#define I2C_SR2_DUALF  					7U
+#define I2C_SR2_PEC  					8U
+
+/*
+ * Bit position definition I2C_CCR
+ */
+#define I2C_CCR_CCR 					0U
+#define I2C_CCR_DUTY 					14U
+#define I2C_CCR_FS  					15U
+
+
+
+/*********************************************************************
+ * Some Generic Macros
+ *********************************************************************/
+#define ENABLE              			1U
+#define DISABLE             			0U
+#define SET                 			ENABLE
+#define RESET               			DISABLE
+#define HIGH							ENABLE
+#define LOW								DISABLE
+#define GPIO_PIN_SET        			SET
+#define GPIO_PIN_RESET      			RESET
+#define FLAG_SET						SET
+#define FLAG_RESET						RESET
 
 
 
