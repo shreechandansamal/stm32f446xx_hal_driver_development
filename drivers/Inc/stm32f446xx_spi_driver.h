@@ -111,7 +111,7 @@ typedef struct
 
 
 /*********************************************************************
- * SPI Application States
+ * @SPI_Application_States
  *********************************************************************
  * These macros indicate the current status/state of SPI communication.
  *
@@ -127,7 +127,7 @@ typedef struct
 
 
 /*********************************************************************
- * SPI Application Events
+ * @SPI_Application_Events
  *********************************************************************
  * These macros are used by the SPI driver to notify the application
  * about communication events through callback function:
@@ -292,7 +292,7 @@ typedef struct
 
 
 /*********************************************************************
- * SPI Status Flags
+ * @SPI_Status_Flags
  *********************************************************************
  * These macros provide masking values for SPI status register (SR)
  * flags.

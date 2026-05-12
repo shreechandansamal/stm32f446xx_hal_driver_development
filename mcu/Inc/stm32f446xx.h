@@ -674,6 +674,15 @@ _Static_assert(sizeof(I2C_RegDef_t) == 0x28, "I2C_RegDef struct size mismatch!")
 
 
 
+/*
+ * Macro to reset I2Cx peripherals
+ */
+#define I2C1_REG_RESET()   do{ (RCC->APB1RSTR |= RCC_APB1RSTR_I2C1RST_Msk); (RCC->APB2RSTR &= ~RCC_APB1RSTR_I2C1RST_Msk); }while(0)
+#define I2C2_REG_RESET()   do{ (RCC->APB1RSTR |= RCC_APB1RSTR_I2C2RST_Msk); (RCC->APB2RSTR &= ~RCC_APB1RSTR_I2C2RST_Msk); }while(0)
+#define I2C3_REG_RESET()   do{ (RCC->APB1RSTR |= RCC_APB1RSTR_I2C3RST_Msk); (RCC->APB2RSTR &= ~RCC_APB1RSTR_I2C3RST_Msk); }while(0)
+
+
+
 /*********************************************************************
  * GPIO Base Address to Code
  *********************************************************************/
