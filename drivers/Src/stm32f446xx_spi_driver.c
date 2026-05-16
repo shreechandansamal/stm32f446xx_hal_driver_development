@@ -212,24 +212,24 @@ void SPI_Init(SPI_Handle_t *pSPIHandle)
     if(pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_FULL_DUPLEX)
     {
         // Clear BIDIMODE and RXONLY
-        cr1_value &= ~(1 << SPI_CR1_BIDIMODE);
-        cr1_value &= ~(1 << SPI_CR1_RXONLY);
+        cr1_value &= ~(1U << SPI_CR1_BIDIMODE);
+        cr1_value &= ~(1U << SPI_CR1_RXONLY);
     }
     else if(pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_HALF_DUPLEX)
     {
         // Clear RXONLY
-        cr1_value &= ~(1 << SPI_CR1_RXONLY);
+        cr1_value &= ~(1U << SPI_CR1_RXONLY);
 
         // Set BIDIMODE
-        cr1_value |= (1 << SPI_CR1_BIDIMODE);
+        cr1_value |= (1U << SPI_CR1_BIDIMODE);
     }
     else if(pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_SIMPLEX_RXONLY)
     {
         // Clear BIDIMODE
-        cr1_value &= ~(1 << SPI_CR1_BIDIMODE);
+        cr1_value &= ~(1U << SPI_CR1_BIDIMODE);
 
         // Set RXONLY
-        cr1_value |= (1 << SPI_CR1_RXONLY);
+        cr1_value |= (1U << SPI_CR1_RXONLY);
     }
 
     // c. Configure baud rate
@@ -520,7 +520,7 @@ void SPI_SendData(SPI_RegDef_t *pSPIx,
 	    return;
 	}
 
-    while(Len > 0)
+    while(Len > 0U)
     {
         // 1. Wait until TXE is set
         while(SPI_GetFlagStatus(pSPIx,
@@ -535,10 +535,10 @@ void SPI_SendData(SPI_RegDef_t *pSPIx,
         	*((__IO uint16_t *)&pSPIx->DR) = *((uint16_t*)pTxBuffer);
 
             // Reduce length by 2 bytes
-            Len -= 2;
+            Len -= 2U;
 
             // Move buffer pointer
-            pTxBuffer += 2;
+            pTxBuffer += 2U;
         }
         else
         {
@@ -861,7 +861,7 @@ void SPI_ReceiveData(SPI_RegDef_t *pSPIx,
 	     return;
 	 }
 
-	 while(Len > 0)
+	 while(Len > 0U)
 	 {
 	  // 1. Wait until RXNE flag becomes SET
 	  while(SPI_GetFlagStatus(pSPIx, SPI_FLAG_RXNE) == FLAG_RESET);
@@ -875,10 +875,10 @@ void SPI_ReceiveData(SPI_RegDef_t *pSPIx,
 		  *(uint16_t *)pRxBuffer = *((__IO uint16_t *)&pSPIx->DR);
 
 		  // Reduce remaining length by 2 bytes
-		  Len -= 2;
+		  Len -= 2U;
 
 		  // Move buffer pointer to next 16-bit location
-		  pRxBuffer += 2;
+		  pRxBuffer += 2U;
 	  }
 	  else
 	  {
@@ -1282,7 +1282,7 @@ void SPI_TransmitReceiveData(SPI_RegDef_t *pSPIx,
 	     return;
 	 }
 
-	while(Len > 0)
+	while(Len > 0U)
 	{
 		// 1. Wait until TXE flag becomes SET
 		while(SPI_GetFlagStatus(pSPIx, SPI_FLAG_TXE) == FLAG_RESET);
@@ -1302,11 +1302,11 @@ void SPI_TransmitReceiveData(SPI_RegDef_t *pSPIx,
 			*((uint16_t *)pRxBuffer) = *((__IO uint16_t *)&pSPIx->DR);
 
 			// Reduce remaining length
-			Len -= 2;
+			Len -= 2U;
 
 			// Move buffer pointers
-			pTxBuffer += 2;
-			pRxBuffer += 2;
+			pTxBuffer += 2U;
+			pRxBuffer += 2U;
 		}
 		else
 		{
@@ -1520,12 +1520,12 @@ void SPI_PeripheralControl(SPI_RegDef_t *pSPIx,
 	if(EnOrDi == ENABLE)
 	{
 		 // Enable SPI peripheral
-	 pSPIx->CR1 |= (1 << SPI_CR1_SPE);
+	 pSPIx->CR1 |= (1U << SPI_CR1_SPE);
 	}
 	else
 	{
 		 // Disable SPI peripheral
-	 pSPIx->CR1 &= ~(1 << SPI_CR1_SPE);
+	 pSPIx->CR1 &= ~(1U << SPI_CR1_SPE);
 	}
 }
 
@@ -1586,10 +1586,10 @@ void SPI_SSIConfig(SPI_RegDef_t *pSPIx,
 
 	if(EnOrDi == ENABLE)
 	{
-		pSPIx->CR1 |= (1 << SPI_CR1_SSI);
+		pSPIx->CR1 |= (1U << SPI_CR1_SSI);
 	}else
 	{
-		pSPIx->CR1 &= ~(1 << SPI_CR1_SSI);
+		pSPIx->CR1 &= ~(1U << SPI_CR1_SSI);
 	}
 }
 
@@ -1777,12 +1777,12 @@ void SPI_SSOEConfig(SPI_RegDef_t *pSPIx,
     if(EnOrDi == ENABLE)
     {
         // Enable automatic NSS output management
-        pSPIx->CR2 |= (1 << SPI_CR2_SSOE);
+        pSPIx->CR2 |= (1U << SPI_CR2_SSOE);
     }
     else
     {
         // Disable automatic NSS output management
-        pSPIx->CR2 &= ~(1 << SPI_CR2_SSOE);
+        pSPIx->CR2 &= ~(1U << SPI_CR2_SSOE);
     }
 }
 
@@ -2005,25 +2005,25 @@ void SPI_IRQInterruptConfig(uint8_t IRQNumber,
 {
  if(EnorDi == ENABLE)
  {
-	 if(IRQNumber <= 31)
+	 if(IRQNumber <= 31U)
 	 {
 		 // IRQ0 to IRQ31 → ISER0
 		 *NVIC_ISER0 |= (1U << IRQNumber);
 	 }
-	 else if(IRQNumber > 31 && IRQNumber < 64)
+	 else if(IRQNumber > 31U && IRQNumber < 64U)
 	 {
 		 // IRQ32 to IRQ63 → ISER1
-		 *NVIC_ISER1 |= (1U << (IRQNumber % 32));
+		 *NVIC_ISER1 |= (1U << (IRQNumber % 32U));
 	 }
-	 else if(IRQNumber > 63 && IRQNumber < 96)
+	 else if(IRQNumber > 63U && IRQNumber < 96U)
 	 {
 		 // IRQ64 to IRQ95 → ISER2
-		 *NVIC_ISER2 |= (1U << (IRQNumber % 64));
+		 *NVIC_ISER2 |= (1U << (IRQNumber % 32U * 2U));
 	 }
  }
  else
  {
-	 if(IRQNumber <= 31)
+	 if(IRQNumber <= 31U)
 	 {
 		 // IRQ0 to IRQ31 → ICER0
 		 *NVIC_ICER0 = (1U << IRQNumber);
@@ -2040,15 +2040,15 @@ void SPI_IRQInterruptConfig(uint8_t IRQNumber,
 		  * No need for read-modify-write using '|='.
 		  */
 	 }
-	 else if(IRQNumber > 31 && IRQNumber < 64)
+	 else if(IRQNumber > 31U && IRQNumber < 64U)
 	 {
 		 // IRQ32 to IRQ63 → ICER1
-		 *NVIC_ICER1 = (1U << (IRQNumber % 32));
+		 *NVIC_ICER1 = (1U << (IRQNumber % 32U));
 	 }
-	 else if(IRQNumber > 63 && IRQNumber < 96)
+	 else if(IRQNumber > 63U && IRQNumber < 96U)
 	 {
 		 // IRQ64 to IRQ95 → ICER2
-		 *NVIC_ICER2 = (1U << (IRQNumber % 64));
+		 *NVIC_ICER2 = (1U << (IRQNumber % 32U * 2U));
 	 }
  }
 }
@@ -2304,10 +2304,10 @@ void SPI_IRQPriorityConfig(uint8_t IRQNumber,
 						 uint32_t IRQPriority)
 {
   // 1. Find the IPR register index
-  uint8_t iprx = IRQNumber / 4;
+  uint8_t iprx = IRQNumber / 4U;
 
   // 2. Find section inside IPR register
-  uint8_t iprx_section = IRQNumber % 4;
+  uint8_t iprx_section = IRQNumber % 4U;
 
   /*
    * 3. Calculate shift amount
@@ -2316,8 +2316,8 @@ void SPI_IRQPriorityConfig(uint8_t IRQNumber,
    * of each 8-bit priority field.
    */
   uint8_t shift_amount =
-		  ((8 * iprx_section) +
-		  (8 - NO_PR_BITS_IMPLEMENTED));
+		  ((8U * iprx_section) +
+		  (8U - NO_PR_BITS_IMPLEMENTED));
 
   // 4. Configure IRQ priority
   *(NVIC_IPR_BASE_ADDR + iprx) |=
@@ -2414,8 +2414,8 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle)
 	uint8_t temp1, temp2;
 
 	//1. check for TXE flag
-	temp1 = pSPIHandle->pSPIx->SR & (1 << SPI_SR_TXE);
-	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_TXEIE);
+	temp1 = pSPIHandle->pSPIx->SR & (1U << SPI_SR_TXE);
+	temp2 = pSPIHandle->pSPIx->CR2 & (1U << SPI_CR2_TXEIE);
 
 	if (temp1 && temp2)
 	{
@@ -2424,8 +2424,8 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle)
 	}
 
 	//2. check for RXNE flag
-	temp1 = pSPIHandle->pSPIx->SR & (1 << SPI_SR_RXNE);
-	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_RXNEIE);
+	temp1 = pSPIHandle->pSPIx->SR & (1U << SPI_SR_RXNE);
+	temp2 = pSPIHandle->pSPIx->CR2 & (1U << SPI_CR2_RXNEIE);
 
 	if (temp1 && temp2)
 	{
@@ -2434,8 +2434,8 @@ void SPI_IRQHandling(SPI_Handle_t *pSPIHandle)
 	}
 
 	//3. check for OVR flag
-	temp1 = pSPIHandle->pSPIx->SR & (1 << SPI_SR_OVR);
-	temp2 = pSPIHandle->pSPIx->CR2 & (1 << SPI_CR2_ERRIE);
+	temp1 = pSPIHandle->pSPIx->SR & (1U << SPI_SR_OVR);
+	temp2 = pSPIHandle->pSPIx->CR2 & (1U << SPI_CR2_ERRIE);
 
 	if (temp1 && temp2) {
 		//handle OVR error interrupt
@@ -2594,10 +2594,10 @@ static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle)
 				*((uint16_t *)pSPIHandle->pTxBuffer);
 
 		//Decrease remaining length by 2 bytes
-		pSPIHandle->TxLen -= 2;
+		pSPIHandle->TxLen -= 2U;
 
 		//Move buffer pointer to next 16-bit data
-		pSPIHandle->pTxBuffer += 2;
+		pSPIHandle->pTxBuffer += 2U;
 	}
 	else
 	{
@@ -2763,7 +2763,7 @@ static void spi_txe_interrupt_handle(SPI_Handle_t *pSPIHandle)
 static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle)
 {
 	//1. Check DFF bit in CR1 register
-	if(pSPIHandle->pSPIx->CR1 & (1 << SPI_CR1_DFF))
+	if(pSPIHandle->pSPIx->CR1 & (1U << SPI_CR1_DFF))
 	{
 		//================= 16-bit DFF =================
 
@@ -2772,10 +2772,10 @@ static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle)
 				*((__IO uint16_t *)&pSPIHandle->pSPIx->DR);
 
 		//Decrease remaining length by 2 bytes
-		pSPIHandle->RxLen -= 2;
+		pSPIHandle->RxLen -= 2U;
 
 		//Move buffer pointer to next 16-bit location
-		pSPIHandle->pRxBuffer += 2;
+		pSPIHandle->pRxBuffer += 2U;
 	}
 	else
 	{
@@ -3081,13 +3081,13 @@ static void spi_ovr_err_interrupt_handle(SPI_Handle_t *pSPIHandle)
 void SPI_CloseTransmission(SPI_Handle_t *pSPIHandle)
 {
 	//1. Disable TXE interrupt
-	pSPIHandle->pSPIx->CR2 &= ~(1 << SPI_CR2_TXEIE);
+	pSPIHandle->pSPIx->CR2 &= ~(1U << SPI_CR2_TXEIE);
 
 	//2. Clear transmit buffer pointer
 	pSPIHandle->pTxBuffer = NULL;
 
 	//3. Reset transmit length
-	pSPIHandle->TxLen = 0;
+	pSPIHandle->TxLen = 0U;
 
 	//4. Mark SPI state as READY
 	pSPIHandle->TxState = SPI_READY;
@@ -3154,13 +3154,13 @@ void SPI_CloseReception(SPI_Handle_t *pSPIHandle)
 {
 
 	//1. Disable RXNE interrupt generation
-	pSPIHandle->pSPIx->CR2 &= ~(1 << SPI_CR2_RXNEIE);
+	pSPIHandle->pSPIx->CR2 &= ~(1U << SPI_CR2_RXNEIE);
 
 	//2. Clear reception buffer pointer
 	pSPIHandle->pRxBuffer = NULL;
 
 	//3. Reset remaining receive length
-	pSPIHandle->RxLen = 0;
+	pSPIHandle->RxLen = 0U;
 
 	//4. Mark SPI reception state as READY
 	pSPIHandle->RxState = SPI_READY;

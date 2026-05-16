@@ -7,6 +7,9 @@
 
 #include"stm32f446xx_i2c_driver.h"
 
+uint16_t AHB_PreScaler[8U] = {2U, 4U, 8U, 16U, 64U, 128U, 256U, 512U};
+uint8_t APB1_PreScaler[4U] = { 2U, 4U, 8U, 16U};
+
 
 /*********************************************************************
  * @fn                - I2C_PeriClockControl
@@ -84,6 +87,91 @@ void I2C_PeriClockControl(I2C_RegDef_t *pI2Cx,
 
 
 /*********************************************************************
+ * @fn      		  - RCC_GetPCLK1Value
+ *
+ * @brief             - Calculate the speed of the PLL
+ *
+ * @param[in]         -
+ *
+ * @return            -
+ *
+ * @Note              - future implementation
+
+ */
+uint32_t  RCC_GetPLLOutputClock()
+{
+	return 0;
+}
+
+
+
+/*********************************************************************
+ * @fn      		  - RCC_GetPCLK1Value
+ *
+ * @brief             - Calculate the Peripheral Clock Speed of APB1
+ *
+ * @param[in]         - void
+ *
+ * @return            - pclk1
+ *
+ * @Note              - this function is used for calculate the speed
+ * 						of APB1 and will be used by FREQ bit of CR2
+ * 						register.
+
+ */
+uint32_t RCC_GetPCLK1Value(void)
+{
+	uint32_t pclk1,SystemClk;
+	uint16_t ahbp,apb1p;
+	uint8_t clksrc,temp;
+
+	//test for the System Clock Source
+	clksrc = ((RCC->CFGR >> 2U) & 0x3U);
+
+	if(clksrc == 0U)
+	{
+		SystemClk = 16000000UL;
+	}else if(clksrc == 1U)
+	{
+		SystemClk = 8000000UL;
+	}else if (clksrc == 2U)
+	{
+		//skipped this because PLL is not required now
+		SystemClk = RCC_GetPLLOutputClock();
+	}
+
+	//test for AHB Pre-Scaler
+	temp = ((RCC->CFGR >> 4U) & 0xFU);
+
+	if(temp < 8U) //system clock not divided
+	{
+		ahbp = 1U;
+	}else
+	{
+		ahbp = AHB_PreScaler[temp - 8U];
+	}
+
+
+
+	//test for APB1 Pre-Scaler
+	temp = ((RCC->CFGR >> 10U) & 0x7U);
+
+	if(temp < 4U) //system clock not divided
+	{
+		apb1p = 1U;
+	}else
+	{
+		apb1p = APB1_PreScaler[temp - 4U];
+	}
+
+	pclk1 =  (SystemClk / ahbp) /apb1p;
+
+	return pclk1;
+}
+
+
+
+/*********************************************************************
  * @fn                - I2C_Init
  *
  * @brief             - Initialize the I2C peripheral with the
@@ -100,6 +188,76 @@ void I2C_PeriClockControl(I2C_RegDef_t *pI2Cx,
  */
 void I2C_Init(I2C_Handle_t *pI2CHandle)
 {
+
+    uint32_t tempreg = 0U;
+
+    //a. Configure ACK Control Bit of CR1
+    tempreg |= pI2CHandle->I2C_Config.I2C_ACKControl << I2C_CR1_ACK;
+    pI2CHandle->pI2Cx->CR1 = tempreg;
+
+    //b. Configure the FREQ field Bit of CR2
+    tempreg = 0U;
+    tempreg |= RCC_GetPCLK1Value() / 1000000U; /*divide by 1MHz because
+    											 to get the MSB number
+    											 ex- 16MHz returned by
+    											 RCC_GetPCLK1Value so
+    											 divide by 1MHz gives
+    											 16, so we want this*/
+
+    pI2CHandle->pI2Cx->CR2 = (tempreg & 0x3FU); /*FREQ field is 6 bits
+     	 	 	 	 	 	 	 	 	 	 	 so we need to set
+     	 	 	 	 	 	 	 	 	 	 	 the tempreg value
+     	 	 	 	 	 	 	 	 	 	 	 into those Bit 5:0
+     	 	 	 	 	 	 	 	 	 	 	 and rest need to be
+     	 	 	 	 	 	 	 	 	 	 	 masked*/
+
+    //c. Configure the device own address
+    tempreg |= pI2CHandle->I2C_Config.I2C_DeviceAddress << I2C_OAR1_ADD_BIT_1_7;
+    tempreg |= (1U << 14U); /*As per Reference Manual, we Should
+    						  always be kept at 1 by software.*/
+    pI2CHandle->pI2Cx->OAR1 = tempreg;
+
+    //d. CCR calculation for SCL speed
+    uint16_t ccr_value = 0U;
+    tempreg = 0U;
+
+    if(pI2CHandle->I2C_Config.I2C_SCLSpeed <= I2C_SCL_SPEED_SM)
+    {
+    	//Standard Mode(SM) (Thigh = CCR * TPCLK1, Tlow = CCR * TPCLK1)
+    	ccr_value = (RCC_GetPCLK1Value() / (2U * pI2CHandle->I2C_Config.I2C_SCLSpeed));
+    	tempreg |= (ccr_value & 0xFFFU); /*CCR field is 12 bits rest
+    	 	 	 	 	 	 	 	 	  need to be masked*/
+    }
+    else
+    {
+    	//Fast Mode(FM)
+    	tempreg |= (1U << I2C_CCR_FS); //set the F/S[15] bit as FM
+    	tempreg |= pI2CHandle->I2C_Config.I2C_FMDutyCycle << I2C_CCR_DUTY;
+    	if(pI2CHandle->I2C_Config.I2C_FMDutyCycle == I2C_FM_DUTY_2)
+    	{
+    		/*Duty 0 : Thigh = CCR * TPCLK1, Tlow = 2 * CCR * TPCLK1
+    		 * 		   Tscl = Thigh + Tlow
+    		 * 		   Tscl = (CCR * TPCLK1) + (2 * CCR * TPCLK1)
+    		 * 		   Tscl = 3 * CCR * TPCLK1
+    		 *
+    		 * 		   CCR = Tscl / (3 * TPCLK1) */
+    		ccr_value = (RCC_GetPCLK1Value() / (3U * pI2CHandle->I2C_Config.I2C_SCLSpeed));
+    	}
+    	else
+    	{
+    		/*Duty 1 : Thigh = 9 * CCR * TPCLK1, Tlow = 16 * CCR * TPCLK1
+    		 * 		   Tscl = (9 * CCR * TPCLK1) + (16 * CCR * TPCLK1)
+    		 * 		   Tscl = 25 * CCR * TPCLK1
+    		 *
+    		 * 		   CCR = Tscl / (25 * TPCLK1) */
+    		ccr_value = (RCC_GetPCLK1Value() / (25U * pI2CHandle->I2C_Config.I2C_SCLSpeed));
+    	}
+    	tempreg |= (ccr_value & 0xFFFU);
+    	pI2CHandle->pI2Cx->CRR = tempreg;
+    }
+
+    //e.Trise calculation
+
 
 }
 
@@ -352,56 +510,56 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx)
  */
 void I2C_IRQInterruptConfig(uint8_t IRQNumber,
 							uint8_t EnorDi)
-{
- if(EnorDi == ENABLE)
  {
-	 if(IRQNumber <= 31)
-	 {
-		 // IRQ0 to IRQ31 → ISER0
-		 *NVIC_ISER0 |= (1U << IRQNumber);
-	 }
-	 else if(IRQNumber > 31 && IRQNumber < 64)
-	 {
-		 // IRQ32 to IRQ63 → ISER1
-		 *NVIC_ISER1 |= (1U << (IRQNumber % 32));
-	 }
-	 else if(IRQNumber > 63 && IRQNumber < 96)
-	 {
-		 // IRQ64 to IRQ95 → ISER2
-		 *NVIC_ISER2 |= (1U << (IRQNumber % 64));
-	 }
- }
- else
- {
-	 if(IRQNumber <= 31)
-	 {
-		 // IRQ0 to IRQ31 → ICER0
-		 *NVIC_ICER0 = (1U << IRQNumber);
+  if(EnorDi == ENABLE)
+  {
+ 	 if(IRQNumber <= 31U)
+ 	 {
+ 		 // IRQ0 to IRQ31 → ISER0
+ 		 *NVIC_ISER0 |= (1U << IRQNumber);
+ 	 }
+ 	 else if(IRQNumber > 31U && IRQNumber < 64U)
+ 	 {
+ 		 // IRQ32 to IRQ63 → ISER1
+ 		 *NVIC_ISER1 |= (1U << (IRQNumber % 32U));
+ 	 }
+ 	 else if(IRQNumber > 63U && IRQNumber < 96U)
+ 	 {
+ 		 // IRQ64 to IRQ95 → ISER2
+ 		 *NVIC_ISER2 |= (1U << (IRQNumber % 32U * 2U));
+ 	 }
+  }
+  else
+  {
+ 	 if(IRQNumber <= 31U)
+ 	 {
+ 		 // IRQ0 to IRQ31 → ICER0
+ 		 *NVIC_ICER0 = (1U << IRQNumber);
 
-		 /*
-		  * ICER is Write-1-to-Clear register:
-		  *
-		  * Write:
-		  *      0 → No effect
-		  *      1 → Disable interrupt
-		  *
-		  * Therefore '=' is enough.
-		  *
-		  * No need for read-modify-write using '|='.
-		  */
-	 }
-	 else if(IRQNumber > 31 && IRQNumber < 64)
-	 {
-		 // IRQ32 to IRQ63 → ICER1
-		 *NVIC_ICER1 = (1U << (IRQNumber % 32));
-	 }
-	 else if(IRQNumber > 63 && IRQNumber < 96)
-	 {
-		 // IRQ64 to IRQ95 → ICER2
-		 *NVIC_ICER2 = (1U << (IRQNumber % 64));
-	 }
+ 		 /*
+ 		  * ICER is Write-1-to-Clear register:
+ 		  *
+ 		  * Write:
+ 		  *      0 → No effect
+ 		  *      1 → Disable interrupt
+ 		  *
+ 		  * Therefore '=' is enough.
+ 		  *
+ 		  * No need for read-modify-write using '|='.
+ 		  */
+ 	 }
+ 	 else if(IRQNumber > 31U && IRQNumber < 64U)
+ 	 {
+ 		 // IRQ32 to IRQ63 → ICER1
+ 		 *NVIC_ICER1 = (1U << (IRQNumber % 32U));
+ 	 }
+ 	 else if(IRQNumber > 63U && IRQNumber < 96U)
+ 	 {
+ 		 // IRQ64 to IRQ95 → ICER2
+ 		 *NVIC_ICER2 = (1U << (IRQNumber % 32U * 2U));
+ 	 }
+  }
  }
-}
 
 
 
@@ -645,10 +803,10 @@ void I2C_IRQInterruptConfig(uint8_t IRQNumber,
  						   uint32_t IRQPriority)
 {
   // 1. Find the IPR register index
-  uint8_t iprx = IRQNumber / 4;
+  uint8_t iprx = IRQNumber / 4U;
 
   // 2. Find section inside IPR register
-  uint8_t iprx_section = IRQNumber % 4;
+  uint8_t iprx_section = IRQNumber % 4U;
 
   /*
    * 3. Calculate shift amount
@@ -657,8 +815,8 @@ void I2C_IRQInterruptConfig(uint8_t IRQNumber,
    * of each 8-bit priority field.
    */
   uint8_t shift_amount =
-		  ((8 * iprx_section) +
-		  (8 - NO_PR_BITS_IMPLEMENTED));
+		  ((8U * iprx_section) +
+		  (8U - NO_PR_BITS_IMPLEMENTED));
 
   // 4. Configure IRQ priority
   *(NVIC_IPR_BASE_ADDR + iprx) |=

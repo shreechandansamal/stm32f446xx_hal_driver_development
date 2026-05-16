@@ -225,7 +225,7 @@ void GPIO_PeriClockControl(GPIO_RegDef_t *pGPIOx, uint8_t EnorDi)
  */
 void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 {
-	uint32_t temp = 0;
+	uint32_t temp = 0U;
 
 	/* Enable the peripheral clock for the GPIO port */
 	GPIO_PeriClockControl(pGPIOHandle->pGPIOx, ENABLE);
@@ -303,14 +303,14 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 		 */
 
 		uint8_t temp1 =
-				pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber / 4;
+				pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber / 4U;
 
 		/*
 		 * temp2 -> Exact EXTI field position inside EXTICR
 		 */
 
 		uint8_t temp2 =
-				pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber % 4;
+				pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber % 4U;
 
 		/*
 		 * Convert GPIO base address into port code
@@ -343,7 +343,7 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 				(1U << pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber);
 	}
 
-	temp = 0;
+//	temp = 0U;
 
 	/* ============================================================
 	 * 4. Configure output speed
@@ -357,7 +357,7 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 
 	pGPIOHandle->pGPIOx->OSPEEDR |= temp;
 
-	temp = 0;
+//	temp = 0U;
 
 	/* ============================================================
 	 * 5. Configure Pull-up / Pull-down settings
@@ -371,7 +371,7 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 
 	pGPIOHandle->pGPIOx->PUPDR |= temp;
 
-	temp = 0;
+//	temp = 0U;
 
 	/* ============================================================
 	 * 6. Configure Output Type
@@ -390,7 +390,7 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 
 	pGPIOHandle->pGPIOx->OTYPER |= temp;
 
-	temp = 0;
+//	temp = 0U;
 
 	/* ============================================================
 	 * 7. Configure Alternate Function
@@ -406,7 +406,7 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 		 */
 
 		temp1 =
-				pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber / 8;
+				pGPIOHandle->GPIO_PinConfig.GPIO_PinNumber / 8U;
 
 		/*
 		 * Exact pin field inside AFR register
@@ -1156,23 +1156,23 @@ void GPIO_IRQInterruptConfig(uint8_t IRQNumber,
 		 * Enable IRQ in NVIC
 		 */
 
-		if(IRQNumber <= 31)
+		if(IRQNumber <= 31U)
 		{
 			/* IRQ0 to IRQ31 -> ISER0 */
 
 			*NVIC_ISER0 |= (1U << IRQNumber);
 		}
-		else if(IRQNumber > 31 && IRQNumber < 64)
+		else if(IRQNumber > 31U && IRQNumber < 64U)
 		{
 			/* IRQ32 to IRQ63 -> ISER1 */
 
-			*NVIC_ISER1 |= (1U << (IRQNumber % 32));
+			*NVIC_ISER1 |= (1U << (IRQNumber % 32U));
 		}
-		else if(IRQNumber > 63 && IRQNumber < 96)
+		else if(IRQNumber > 63U && IRQNumber < 96U)
 		{
 			/* IRQ64 to IRQ95 -> ISER2 */
 
-			*NVIC_ISER2 |= (1U << (IRQNumber % (32 * 2)));
+			*NVIC_ISER2 |= (1U << (IRQNumber % (32U * 2U)));
 		}
 	}
 	else
@@ -1181,7 +1181,7 @@ void GPIO_IRQInterruptConfig(uint8_t IRQNumber,
 		 * Disable IRQ in NVIC
 		 */
 
-		if(IRQNumber <= 31)
+		if(IRQNumber <= 31U)
 		{
 			/* IRQ0 to IRQ31 -> ICER0 */
 
@@ -1199,17 +1199,17 @@ void GPIO_IRQInterruptConfig(uint8_t IRQNumber,
 			  * No need for read-modify-write using '|='.
 			  */
 		}
-		else if(IRQNumber > 31 && IRQNumber < 64)
+		else if(IRQNumber > 31U && IRQNumber < 64U)
 		{
 			/* IRQ32 to IRQ63 -> ICER1 */
 
-			*NVIC_ICER1 = (1U << (IRQNumber % 32));
+			*NVIC_ICER1 = (1U << (IRQNumber % 32U));
 		}
-		else if(IRQNumber > 63 && IRQNumber < 96)
+		else if(IRQNumber > 63U && IRQNumber < 96U)
 		{
 			/* IRQ64 to IRQ95 -> ICER2 */
 
-			*NVIC_ICER2 = (1U << (IRQNumber % (32 * 2)));
+			*NVIC_ICER2 = (1U << (IRQNumber % (32U * 2U)));
 		}
 	}
 }
@@ -1350,12 +1350,12 @@ void GPIO_IRQInterruptConfig(uint8_t IRQNumber,
  	/*
  	 * 1. Find the IPR register index
  	 */
- 	uint8_t iprx = IRQNumber / 4;
+ 	uint8_t iprx = IRQNumber / 4U;
 
  	/*
  	 * 2. Find the IRQ section inside the IPR register
  	 */
- 	uint8_t iprx_section = IRQNumber % 4;
+ 	uint8_t iprx_section = IRQNumber % 4U;
 
  	/*
  	 * 3. Calculate shift amount
@@ -1364,8 +1364,8 @@ void GPIO_IRQInterruptConfig(uint8_t IRQNumber,
  	 * of each 8-bit priority field.
  	 */
  	uint8_t shift_amount =
- 			((8 * iprx_section) +
- 			(8 - NO_PR_BITS_IMPLEMENTED));
+ 			((8U * iprx_section) +
+ 			(8U - NO_PR_BITS_IMPLEMENTED));
 
  	/*
  	 * 4. Configure IRQ priority

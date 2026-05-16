@@ -829,6 +829,20 @@ _Static_assert(sizeof(I2C_RegDef_t) == 0x28, "I2C_RegDef struct size mismatch!")
 #define I2C_CR2_LAST					12U
 
 /*
+ * Bit position definition I2C_OAR1
+ */
+#define I2C_OAR1_ADD_BIT_0				0U
+#define I2C_OAR1_ADD_BIT_1_7			1U
+#define I2C_OAR1_ADD_BIT_8_9			8U
+#define I2C_OAR1_ADD_MODE				15U
+
+/*
+ * Bit position definition I2C_OAR2
+ */
+#define I2C_OAR2_EN_DUAL				0U
+#define I2C_OAR2_ADD2_BIT_1_7			1U
+
+/*
  * Bit position definition I2C_SR1
  */
 #define I2C_SR1_SB  					0U

@@ -119,10 +119,10 @@ typedef struct
  * multiple transmissions/receptions.
  *
  *********************************************************************/
-#define SPI_READY							0
-#define SPI_BUSY_IN_RX						1
-#define SPI_BUSY_IN_TX						2
-//#define SPI_ERROR_INVALID_LENGTH			3 //[WAP]
+#define SPI_READY							0U
+#define SPI_BUSY_IN_RX						1U
+#define SPI_BUSY_IN_TX						2U
+//#define SPI_ERROR_INVALID_LENGTH			3U //[WAP]
 
 
 
@@ -135,10 +135,10 @@ typedef struct
  *    SPI_ApplicationEventCallback()
  *
  *********************************************************************/
-#define SPI_EVENT_TX_CMPLT					1
-#define SPI_EVENT_RX_CMPLT					2
-#define SPI_EVENT_OVR_ERR					3
-#define SPI_EVENT_CRC_ERR					4
+#define SPI_EVENT_TX_CMPLT					1U
+#define SPI_EVENT_RX_CMPLT					2U
+#define SPI_EVENT_OVR_ERR					3U
+#define SPI_EVENT_CRC_ERR					4U
 
 
 
@@ -158,8 +158,8 @@ typedef struct
  * After reset, SPI defaults to Slave mode.
  *
  *********************************************************************/
-#define SPI_DEVICE_MODE_SLAVE  				0
-#define SPI_DEVICE_MODE_MASTER				1
+#define SPI_DEVICE_MODE_SLAVE  				0U
+#define SPI_DEVICE_MODE_MASTER				1U
 
 
 
@@ -184,9 +184,9 @@ typedef struct
  * bits in SPI_CR1 register.
  *
  *********************************************************************/
-#define SPI_BUS_CONFIG_FULL_DUPLEX			1
-#define SPI_BUS_CONFIG_HALF_DUPLEX			2
-#define SPI_BUS_CONFIG_SIMPLEX_RXONLY		3
+#define SPI_BUS_CONFIG_FULL_DUPLEX			1U
+#define SPI_BUS_CONFIG_HALF_DUPLEX			2U
+#define SPI_BUS_CONFIG_SIMPLEX_RXONLY		3U
 
 
 
@@ -203,14 +203,14 @@ typedef struct
  * Controlled using BR bit field in SPI_CR1 register.
  *
  *********************************************************************/
-#define SPI_SCLK_SPEED_DIV2					0
-#define SPI_SCLK_SPEED_DIV4					1
-#define SPI_SCLK_SPEED_DIV8					2
-#define SPI_SCLK_SPEED_DIV16				3
-#define SPI_SCLK_SPEED_DIV32				4
-#define SPI_SCLK_SPEED_DIV64				5
-#define SPI_SCLK_SPEED_DIV128				6
-#define SPI_SCLK_SPEED_DIV256				7
+#define SPI_SCLK_SPEED_DIV2					0U
+#define SPI_SCLK_SPEED_DIV4					1U
+#define SPI_SCLK_SPEED_DIV8					2U
+#define SPI_SCLK_SPEED_DIV16				3U
+#define SPI_SCLK_SPEED_DIV32				4U
+#define SPI_SCLK_SPEED_DIV64				5U
+#define SPI_SCLK_SPEED_DIV128				6U
+#define SPI_SCLK_SPEED_DIV256				7U
 
 
 
@@ -228,8 +228,8 @@ typedef struct
  * Controlled using DFF bit in SPI_CR1 register.
  *
  *********************************************************************/
-#define SPI_DFF_8BITS						0
-#define SPI_DFF_16BITS						1
+#define SPI_DFF_8BITS						0U
+#define SPI_DFF_16BITS						1U
 
 
 
@@ -247,8 +247,8 @@ typedef struct
  * Controlled using CPOL bit in SPI_CR1 register.
  *
  *********************************************************************/
-#define SPI_CPOL_LOW						0
-#define SPI_CPOL_HIGH						1
+#define SPI_CPOL_LOW						0U
+#define SPI_CPOL_HIGH						1U
 
 
 
@@ -266,8 +266,8 @@ typedef struct
  * Controlled using CPHA bit in SPI_CR1 register.
  *
  *********************************************************************/
-#define SPI_CPHA_LOW						0
-#define SPI_CPHA_HIGH						1
+#define SPI_CPHA_LOW						0U
+#define SPI_CPHA_HIGH						1U
 
 
 
@@ -285,8 +285,8 @@ typedef struct
  * Controlled using SSM bit in SPI_CR1 register.
  *
  *********************************************************************/
-#define SPI_SSM_DI							0
-#define SPI_SSM_EN							1
+#define SPI_SSM_DI							0U
+#define SPI_SSM_EN							1U
 
 
 
@@ -300,9 +300,9 @@ typedef struct
  * Used with SPI_GetFlagStatus().
  *
  *********************************************************************/
-#define SPI_FLAG_TXE						(1 << SPI_SR_TXE)
-#define SPI_FLAG_RXNE						(1 << SPI_SR_RXNE)
-#define SPI_FLAG_BUSY						(1 << SPI_SR_BSY)
+#define SPI_FLAG_TXE						(1U << SPI_SR_TXE)
+#define SPI_FLAG_RXNE						(1U << SPI_SR_RXNE)
+#define SPI_FLAG_BUSY						(1U << SPI_SR_BSY)
 
 
 

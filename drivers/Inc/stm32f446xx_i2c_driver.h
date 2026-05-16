@@ -74,9 +74,9 @@ typedef struct
  * 	-I2C_SCL_SPEED_FM2K means Fast Speed Mode with speed 200KHz
  *
  *********************************************************************/
-#define I2C_SCL_SPEED_SM 					100000
-#define I2C_SCL_SPEED_FM4K 					400000
-#define I2C_SCL_SPEED_FM2K 					200000
+#define I2C_SCL_SPEED_SM 					100000U
+#define I2C_SCL_SPEED_FM4K 					400000U
+#define I2C_SCL_SPEED_FM2K 					200000U
 
 
 
@@ -87,8 +87,8 @@ typedef struct
  * These macros indicate the ACK Enable or Disable
  *
  *********************************************************************/
-#define I2C_ACK_EN							1
-#define I2C_ACK_DI							0
+#define I2C_ACK_EN							1U
+#define I2C_ACK_DI							0U
 
 
 
@@ -99,8 +99,8 @@ typedef struct
  * These macros indicate the Duty Cycle in Fast Mode
  *
  *********************************************************************/
-#define I2C_FM_DUTY_2						0
-#define I2C_FM_DUTY_16_9					1
+#define I2C_FM_DUTY_2						0U
+#define I2C_FM_DUTY_16_9					1U
 
 
 
