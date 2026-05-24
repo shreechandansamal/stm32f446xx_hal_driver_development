@@ -98,7 +98,7 @@ void GPIO_ButtonInit(void){
 
 
 	//Enable the Clock for GPIOC
-	GPIO_PeriClockControl(GPIOC, ENABLE);
+//	GPIO_PeriClockControl(GPIOC, ENABLE);
 	//Initialize the GPIO Button
 	GPIO_Init(&GpioBtn);
 }
@@ -146,3 +146,5 @@ int main(){
 	}
 	return 0;
 }
+
+

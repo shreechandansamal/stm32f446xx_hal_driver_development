@@ -1519,13 +1519,13 @@ void SPI_PeripheralControl(SPI_RegDef_t *pSPIx,
 {
 	if(EnOrDi == ENABLE)
 	{
-		 // Enable SPI peripheral
-	 pSPIx->CR1 |= (1U << SPI_CR1_SPE);
+		// Enable SPI peripheral
+		pSPIx->CR1 |= (1U << SPI_CR1_SPE);
 	}
 	else
 	{
-		 // Disable SPI peripheral
-	 pSPIx->CR1 &= ~(1U << SPI_CR1_SPE);
+		// Disable SPI peripheral
+		pSPIx->CR1 &= ~(1U << SPI_CR1_SPE);
 	}
 }
 
@@ -2887,20 +2887,7 @@ static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle)
  *                           application must decide when it is safe
  *                           to clear OVR.
  *
- *                     11. Why temporary variable 'temp' is used?
- *
- *                           Simply reading DR/SR is enough to clear
- *                           OVR flag.
- *
- *                           Actual values are not important here.
- *
- *                           Reads are performed only for hardware
- *                           flag clearing sequence.
- *
- *                     12. (void)temp is used to suppress compiler
- *                         warning for unused variable.
- *
- *                     13. Typical OVR sequence:
+ *                     11. Typical OVR sequence:
  *
  *                           RXNE = 1
  *                                |
@@ -2925,14 +2912,14 @@ static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle)
  *                                v
  *                         OVR flag cleared
  *
- *                     14. Important:
+ *                     12. Important:
  *
  *                           OVR mainly affects received data.
  *
  *                           Transmitted data may still successfully
  *                           leave MOSI pin.
  *
- *                     15. In Full-Duplex SPI:
+ *                     13. In Full-Duplex SPI:
  *
  *                           Every transmission also generates a
  *                           received frame.
@@ -2940,14 +2927,14 @@ static void spi_rxne_interrupt_handle(SPI_Handle_t *pSPIHandle)
  *                           Therefore even "Transmit Only" operations
  *                           may generate OVR if RX data is ignored.
  *
- *                     16. Best practices to avoid OVR:
+ *                     14. Best practices to avoid OVR:
  *
  *                           - Always read received data
  *                           - Use interrupt/DMA for high-speed SPI
  *                           - Keep ISR execution short
  *                           - Do not block CPU excessively
  *
- *                     17. SPI_ApplicationEventCallback() informs the
+ *                     15. SPI_ApplicationEventCallback() informs the
  *                         application layer that an OVR error occurred
  *                         so recovery action can be taken.
  *
@@ -3211,13 +3198,6 @@ void SPI_CloseReception(SPI_Handle_t *pSPIHandle)
  *                           - Inside application error handling
  *                           - After failed SPI communication
  *
- *                      8. Temporary variable is used only to perform
- *                         dummy reads from hardware registers.
- *
- *                      9. '(void)temp' is used to avoid compiler
- *                         warning:
- *
- *                           "variable set but not used"
  *
  */
 void SPI_ClearOVRFlag(SPI_RegDef_t *pSPIx)

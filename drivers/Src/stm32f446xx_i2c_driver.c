@@ -11,6 +11,30 @@ uint16_t AHB_PreScaler[8U] = {2U, 4U, 8U, 16U, 64U, 128U, 256U, 512U};
 uint8_t APB1_PreScaler[4U] = { 2U, 4U, 8U, 16U};
 
 
+
+/********************************************************************
+ * @Note- private helper function section
+ *
+ * @brief  - don't declare these prototypes in the header because these are private functions
+ *  		 and we don't want to expose it to user application
+ *
+ * use static keyword to indicate these are private helper function, so if application tries
+ * to call them, then compiler will issue an error.
+ */
+static uint32_t RCC_GetPCLK1Value(void);
+static uint32_t  RCC_GetPLLOutputClock(void);
+static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx);
+static void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx);
+static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx,
+									uint8_t SlaveAddr);
+static void I2C_ClearADDRFlag(I2C_RegDef_t *pI2Cx);
+static void I2C_AckControl(I2C_RegDef_t *pI2Cx,
+						   uint8_t EnOrDi);
+
+/***********************************************************************/
+
+
+
 /*********************************************************************
  * @fn                - I2C_PeriClockControl
  *
@@ -98,7 +122,7 @@ void I2C_PeriClockControl(I2C_RegDef_t *pI2Cx,
  * @Note              - future implementation
 
  */
-uint32_t  RCC_GetPLLOutputClock()
+static uint32_t  RCC_GetPLLOutputClock()
 {
 	return 0;
 }
@@ -112,14 +136,13 @@ uint32_t  RCC_GetPLLOutputClock()
  *
  * @param[in]         - void
  *
- * @return            - pclk1
+ * @return            - pclk1(Hz)
  *
  * @Note              - this function is used for calculate the speed
- * 						of APB1 and will be used by FREQ bit of CR2
- * 						register.
+ * 						of APB1
 
  */
-uint32_t RCC_GetPCLK1Value(void)
+static uint32_t RCC_GetPCLK1Value(void)
 {
 	uint32_t pclk1,SystemClk;
 	uint16_t ahbp,apb1p;
@@ -164,7 +187,7 @@ uint32_t RCC_GetPCLK1Value(void)
 		apb1p = APB1_PreScaler[temp - 4U];
 	}
 
-	pclk1 =  (SystemClk / ahbp) /apb1p;
+	pclk1 =  (SystemClk / ahbp) / apb1p;
 
 	return pclk1;
 }
@@ -191,9 +214,14 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
 
     uint32_t tempreg = 0U;
 
-    //a. Configure ACK Control Bit of CR1
+    //enable the clock for the I2Cx peripheral
+    I2C_PeriClockControl(pI2CHandle->pI2Cx, ENABLE);
+
+/*    //a. Configure ACK Control Bit of CR1 (as ACK bit can be only ENABLE(set) while PE=1,
+ * 						                     so this part has shifted to I2C_PeripheralControl
+ * 						                     function)
     tempreg |= pI2CHandle->I2C_Config.I2C_ACKControl << I2C_CR1_ACK;
-    pI2CHandle->pI2Cx->CR1 = tempreg;
+    pI2CHandle->pI2Cx->CR1 = tempreg; */
 
     //b. Configure the FREQ field Bit of CR2
     tempreg = 0U;
@@ -212,6 +240,7 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
      	 	 	 	 	 	 	 	 	 	 	 masked*/
 
     //c. Configure the device own address
+    tempreg = 0U;
     tempreg |= pI2CHandle->I2C_Config.I2C_DeviceAddress << I2C_OAR1_ADD_BIT_1_7;
     tempreg |= (1U << 14U); /*As per Reference Manual, we Should
     						  always be kept at 1 by software.*/
@@ -225,8 +254,6 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
     {
     	//Standard Mode(SM) (Thigh = CCR * TPCLK1, Tlow = CCR * TPCLK1)
     	ccr_value = (RCC_GetPCLK1Value() / (2U * pI2CHandle->I2C_Config.I2C_SCLSpeed));
-    	tempreg |= (ccr_value & 0xFFFU); /*CCR field is 12 bits rest
-    	 	 	 	 	 	 	 	 	  need to be masked*/
     }
     else
     {
@@ -252,12 +279,29 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
     		 * 		   CCR = Tscl / (25 * TPCLK1) */
     		ccr_value = (RCC_GetPCLK1Value() / (25U * pI2CHandle->I2C_Config.I2C_SCLSpeed));
     	}
-    	tempreg |= (ccr_value & 0xFFFU);
-    	pI2CHandle->pI2Cx->CRR = tempreg;
     }
+	tempreg |= (ccr_value & 0xFFFU); //CCR[11:0]
+	pI2CHandle->pI2Cx->CCR = tempreg;
 
     //e.Trise calculation
-
+	tempreg = 0U;
+    if(pI2CHandle->I2C_Config.I2C_SCLSpeed <= I2C_SCL_SPEED_SM)
+    {
+    	/*Standard Mode(SM) Trise calculation
+    	 * Max rise time 1000ns
+    	 * (Trise(max) / Tpclk1) + 1 (in time) or (Fpclk1 * Trise(max)) + 1 (in frequency)
+    	 */
+    	tempreg |= ((RCC_GetPCLK1Value() / 1000000U) + 1U);
+    }
+    else
+    {
+    	/*Fast Mode(FM) Trise calculation
+    	 * Max rise time 300ns
+    	 * (Trise(max) / Tpclk1) + 1 (in time) or (Fpclk1 * Trise(max)) + 1 (in frequency)
+    	 */
+    	tempreg |= (((RCC_GetPCLK1Value() * 300U) / 1000000000U) + 1U);
+    }
+    pI2CHandle->pI2Cx->TRISE = (tempreg & 0x3FU); // TRISE[5:0]
 
 }
 
@@ -322,6 +366,277 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx)
     }
 }
 
+
+
+/********************************************************************
+ * @fn				  - AckControl
+ *
+ * @brief			  - Enable or Disable the ACK bit.
+ *
+ * @param[in]         - pI2Cx   : Base address of I2C peripheral
+ * @param[in]         - EnOrDi  : ENABLE or DISABLE macros
+ *
+ * @return			  - none
+ *
+ * @Note			  - none
+ */
+static void I2C_AckControl(I2C_RegDef_t *pI2Cx,
+						   uint8_t EnOrDi)
+{
+	if (EnOrDi == ENABLE)
+	{
+		pI2Cx->CR1 |= (1 << I2C_CR1_ACK);
+	}
+	else
+	{
+		pI2Cx->CR1 &= ~(1 << I2C_CR1_ACK);
+	}
+}
+
+/*********************************************************************
+ * @fn                - I2C_GetFlagStatus
+ *
+ * @brief             - Get the status of a specific I2C status flag.
+ *
+ * @param[in]         - pI2Cx     : Base address of the I2C peripheral
+ * @param[in]         - FlagName  : I2C status flag to check
+ *
+ * @return            - FLAG_SET   : Flag is set
+ *                      FLAG_RESET : Flag is reset
+ *
+ * @Note              -
+ *                      1. This function checks the I2C Status
+ *                         Register (I2C_SR) for a specific flag.
+ *
+ *                      2. I2C status flags indicate the current
+ *                         state of I2C communication hardware.
+ *
+ *                      3. This API is commonly used in polling-based
+ *                         I2C communication.
+ *
+ *                      4. Example:
+ *
+ *                              while(I2C_GetFlagStatus
+ *                                   (I2C2, I2C_FLAG_SB)
+ *                                   == FLAG_RESET);
+ *
+ *                         Waits until START condition generation is
+ *                         completed.
+ *
+ *                     10. Status flags are hardware controlled and
+ *                         updated automatically by I2C peripheral.
+ *
+ */
+uint8_t I2C_GetFlagStatus(I2C_RegDef_t *pI2Cx,
+                          uint8_t FlagName)
+{
+    if(pI2Cx->SR1 & FlagName)
+    {
+        return FLAG_SET;
+    }
+
+    return FLAG_RESET;
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_GenerateStartCondition
+ *
+ * @brief             - Generate Start Condition
+ *
+ * @param[in]         - pI2Cx : Base address of the I2C peripheral
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *
+ */
+static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx)
+{
+	pI2Cx->CR1 |= (1U << I2C_CR1_START);
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_GenerateEndCondition
+ *
+ * @brief             - Generate End Condition
+ *
+ * @param[in]         - pI2Cx : Base address of the I2C peripheral
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *
+ */
+static void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx)
+{
+	pI2Cx->CR1 |= (1U << I2C_CR1_STOP);
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_ExecuteAddressPhase
+ *
+ * @brief             - Set the Slave address and r/nw bit as write
+ * 						into the Address Phase.
+ *
+ * @param[in]         - pI2Cx     : Base address of the I2C peripheral
+ * @param[in]         - SlaveAddr  : 7 bit Slave Address
+ *
+ * @return            - none
+ *
+ * @Note              - set the 7 bit slave address into the address
+ * 						phase, but as the data by default goes to the
+ * 						LSB bit, but for us the 8 Bit Address Phase
+ * 						consist of 7 bits Slave address and 1 bit r/nw
+ * 						so, we need to shift those 7 bits into the MSB
+ * 						then rest the LSB bit or make it 0 to indicate
+ * 						r/nw bit as write.
+ *
+ * 						SlaveAddr = SlaveAddr + R/nW
+ *
+ */
+static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx,
+							        uint8_t SlaveAddr)
+{
+	SlaveAddr = SlaveAddr << 1; /*shift the 7 bits address moved by 1 bit
+								  to the MSB*/
+	SlaveAddr &= ~(1); // LSB is R/nW bit which must be set to 0 for WRITE
+	pI2Cx->DR = SlaveAddr;
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_ClearADDRFlag
+ *
+ * @brief             - ADDR Bit clear by reading SR1 register followed by SR2 register
+ *
+ * @param[in]         - pI2Cx     : Base address of the I2C peripheral
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *
+ */
+static void I2C_ClearADDRFlag(I2C_RegDef_t *pI2Cx)
+{
+	//1. read SR1
+	(void)pI2Cx->SR1;
+	//2. followed by read SR2
+	(void)pI2Cx->SR2;
+}
+
+
+
+/*********************************************************************
+ * @fn      		  - I2C_PeripheralControl
+ *
+ * @brief             -	Enable or Disable the I2C peripheral
+ *                      using PE bit in CR1 register.
+ *
+ * @param[in]         - pI2Cx   : Base address of I2C peripheral
+ * @param[in]         - EnOrDi  : ENABLE or DISABLE macros
+ *
+ * @return            - none
+ *
+ * @Note              -
+
+ */
+void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx,
+						   uint8_t EnOrDi)
+{
+	if(EnOrDi == ENABLE)
+	{
+		// Enable I2C peripheral
+		pI2Cx->CR1 |= (1 << I2C_CR1_PE);
+		I2C_AckControl(pI2Cx, ENABLE); //Enable ack, this can not be set before PE = 1
+	}
+	else
+	{
+		// Disable I2C peripheral
+		pI2Cx->CR1 &= ~(1 << I2C_CR1_PE);
+	}
+
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_MasterSendData
+ *
+ * @brief             - Master Transmit data over I2C peripheral using
+ *                      blocking/polling method.
+ *
+ * @param[in]         - pI2Cx : Base address of the I2C peripheral
+ * @param[in]		  - pTxBuffer : Pointer to transmit data buffer
+ * @param[in]		  - Len : Length of transmit data buffer in bytes
+ * @param[in]		  - SlaveAddr : 7 bit slave address
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *
+ */
+void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
+						uint8_t *pTxBuffer,
+						uint32_t Len,
+						uint8_t SlaveAddr)
+{
+	//1. Generate the START Condition
+	I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
+
+	/*2. Confirm that START Generation is completed by checking the SB flag in the SR1
+	     Note: Until SB is cleared SCL will be stretched (pulled to LOW) */
+	while(I2C_GetFlagStatus(pI2CHandle->pI2Cx, I2C_FLAG_SB) == FLAG_RESET);
+
+	//3. Send the address of the slave with r/nw bit set to w(0) (total 8 bits)
+	I2C_ExecuteAddressPhase(pI2CHandle->pI2Cx, SlaveAddr);
+
+	//4. Confirm that address phase is completed by checking the ADDR flag in the SR1
+	while(I2C_GetFlagStatus(pI2CHandle->pI2Cx, I2C_FLAG_ADDR) == FLAG_RESET);
+
+	/*5. Clear the ADDR flag according to its software sequence
+	 	 Note: Until ADDR is cleared SCL will be stretched (pulled to LOW) */
+	I2C_ClearADDRFlag(pI2CHandle->pI2Cx);
+
+	//6. Send the data until Len becomes 0
+	while(Len > 0)
+	{
+		//wait until TXE is set
+		while(I2C_GetFlagStatus(pI2CHandle->pI2Cx, I2C_FLAG_TXE) == FLAG_RESET); //Check if transmission data register is empty
+		//LOAD 1 Data Byte from pTxBuffer into DR register
+		pI2CHandle->pI2Cx->DR = *pTxBuffer;
+		//Move 1 step for Next Byte from pTxBuffer
+		pTxBuffer++;
+		//Reduce length by 1 byte
+		Len--;
+	}
+
+	/*7. When Len becomes zero wait for TXE=1 and BTF=1 before generating the STOP
+	 *   Condition.
+	 *   Note: TXE=1, BTF=1, means that both SR and DR are empty and next transmission
+	 *   should begin
+	 *   when BTF=1 SCL will be stretched (pulled LOW)
+	 */
+	while(I2C_GetFlagStatus(pI2CHandle->pI2Cx, I2C_FLAG_TXE) == FLAG_RESET); //Check if data register is empty
+	while(I2C_GetFlagStatus(pI2CHandle->pI2Cx, I2C_FLAG_BTF) == FLAG_RESET); //Check if last byte transmission is completed
+
+
+	/*8. Generate STOP Condition and Master need to wait for the completion of STOP
+	 * 	 Condition.
+	 * 	 Note: Generating STOP, automatically clears the BTF.
+	 */
+	I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
+
+
+
+
+}
 
 
 

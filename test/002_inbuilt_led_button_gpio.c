@@ -7,6 +7,7 @@
 
 //Device specific header file
 #include "stm32f446xx.h"
+#include "stm32f446xx_gpio_driver.h"
 
 #define LOW 		   DISABLE
 #define BTN_PRESSED        LOW

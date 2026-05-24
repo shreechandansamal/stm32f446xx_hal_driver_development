@@ -105,6 +105,29 @@ typedef struct
 
 
 
+/*********************************************************************
+ * @I2C_Status_Flags
+ *********************************************************************
+ * These macros provide masking values for I2C status register
+ * (SR1, SR2) flags.
+ *
+ * Used with I2C_GetFlagStatus().
+ *
+ *********************************************************************/
+//SR1 register status flags
+#define I2C_FLAG_SB							(1U << I2C_SR1_SB)
+#define I2C_FLAG_ADDR						(1U << I2C_SR1_ADDR)
+#define I2C_FLAG_BTF						(1U << I2C_SR1_BTF)
+#define I2C_FLAG_ADD10  					(1U << I2C_SR1_ADD10)
+#define I2C_FLAG_STOPF						(1U << I2C_SR1_STOPF)
+#define I2C_FLAG_RXNE						(1U << I2C_SR1_RXNE)
+#define I2C_FLAG_TXE						(1U << I2C_SR1_TXE)
+#define I2C_FLAG_BERR						(1U << I2C_SR1_BERR)
+#define I2C_FLAG_ARLO						(1U << I2C_SR1_ARLO)
+#define I2C_FLAG_AF 						(1U << I2C_SR1_AF)
+#define I2C_FLAG_OVR 						(1U << I2C_SR1_OVR)
+#define I2C_FLAG_TIMEOUT 					(1U << I2C_SR1_TIMEOUT)
+
 
 
 
@@ -143,7 +166,10 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx);
 /*********************************************************************
  * Data Transmission and Reception APIs
  *********************************************************************/
-
+void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
+						uint8_t *pTxBuffer,
+						uint32_t Len,
+						uint8_t SlaveAddr);
 
 
 
