@@ -28,10 +28,10 @@ int main(void){
 	GpioLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
 	GpioLed.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 	GpioLed.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-	GpioLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	GpioLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
-	//Enable the Clock for GPIOA
-	GPIO_PeriClockControl(GPIOA, ENABLE);
+//	//Enable the Clock for GPIOA
+//	GPIO_PeriClockControl(GPIOA, ENABLE);
 	//Initialize the GPIO LED
 	GPIO_Init(&GpioLed);
 
@@ -43,8 +43,8 @@ int main(void){
 	GpioBtn.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
 
 
-	//Enable the Clock for GPIOB
-	GPIO_PeriClockControl(GPIOB, ENABLE);
+//	//Enable the Clock for GPIOB
+//	GPIO_PeriClockControl(GPIOB, ENABLE);
 	//Initialize the GPIO Button
 	GPIO_Init(&GpioBtn);
 

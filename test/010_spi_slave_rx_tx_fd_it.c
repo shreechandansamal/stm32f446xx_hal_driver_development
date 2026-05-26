@@ -59,7 +59,7 @@ void SPI2_GPIOInit(void)
 	SPI2Pins.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 	SPI2Pins.GPIO_PinConfig.GPIO_PinAltFunMode = GPIO_MODE_ALTFN_AF5;
 	SPI2Pins.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-	SPI2Pins.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	SPI2Pins.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 	SPI2Pins.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 
 	//MOSI
@@ -104,7 +104,7 @@ void Button_Init(void)
 	GpioBtn.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_13;
 	GpioBtn.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
 	GpioBtn.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	GpioBtn.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	GpioBtn.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
 	GPIO_Init(&GpioBtn);
 }
@@ -119,7 +119,7 @@ void Notify_Init(void)
 	gpio.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
 	gpio.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
 	gpio.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	gpio.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	gpio.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
 	GPIO_Init(&gpio);
 }

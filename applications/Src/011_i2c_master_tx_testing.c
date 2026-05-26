@@ -40,7 +40,7 @@ void I2C1_GPIOInit(void)
 	I2C1Pins.pGPIOx = GPIOB;
 	I2C1Pins.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 	I2C1Pins.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_OD;
-	I2C1Pins.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
+	I2C1Pins.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 	I2C1Pins.GPIO_PinConfig.GPIO_PinAltFunMode = GPIO_MODE_ALTFN_AF4;
 	I2C1Pins.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 
@@ -57,7 +57,7 @@ void I2C1_GPIOInit(void)
 void I2C1_Init(void)
 {
 	I2C1Handle.pI2Cx = I2C1;
-	I2C1Handle.I2C_Config.I2C_ACKControl = I2C_ACK_EN;
+	I2C1Handle.I2C_Config.I2C_ACKControl = I2C_ACK_ENABLE;
 	I2C1Handle.I2C_Config.I2C_DeviceAddress = MY_ADDR;
 	I2C1Handle.I2C_Config.I2C_SCLSpeed = I2C_SCL_SPEED_SM; //100KHz
 
@@ -75,7 +75,7 @@ void Onboard_ButtonInit(void)
 	GpioBtn.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_13;
 	GpioBtn.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
 	GpioBtn.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	GpioBtn.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	GpioBtn.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
 	GPIO_Init(&GpioBtn);
 }
@@ -90,9 +90,11 @@ int main(void)
 	I2C1_GPIOInit();
 	I2C1_Init();
 
-
 	//enable the i2c peripheral
 	I2C_PeripheralControl(I2C1,ENABLE);
+
+	//enable ACK, this can not be set before PE = 1(enable i2c peripheral)
+	I2C_AckControl(I2C1, I2C_ACK_ENABLE);
 
 	while(1)
 	{

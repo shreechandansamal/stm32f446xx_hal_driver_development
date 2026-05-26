@@ -47,7 +47,7 @@ void SPI2_GPIOInit(void)
 	SPI2Pins.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 	SPI2Pins.GPIO_PinConfig.GPIO_PinAltFunMode = GPIO_MODE_ALTFN_AF5;
 	SPI2Pins.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-	SPI2Pins.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	SPI2Pins.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 	SPI2Pins.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 
 	SPI2Pins.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_13;
@@ -84,7 +84,7 @@ void RC522_NSS_Init(void)
 	NSSPin.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_12;
 	NSSPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
 	NSSPin.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-	NSSPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	NSSPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 	NSSPin.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 
 	GPIO_Init(&NSSPin);
@@ -100,7 +100,7 @@ void RC522_RST_Init(void)
 	RSTPin.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_2;
 	RSTPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
 	RSTPin.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-	RSTPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+	RSTPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 	RSTPin.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 
 	GPIO_Init(&RSTPin);

@@ -87,8 +87,8 @@ typedef struct
  * These macros indicate the ACK Enable or Disable
  *
  *********************************************************************/
-#define I2C_ACK_EN							1U
-#define I2C_ACK_DI							0U
+#define I2C_ACK_ENABLE						1U
+#define I2C_ACK_DISABLE						0U
 
 
 
@@ -171,7 +171,10 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 						uint32_t Len,
 						uint8_t SlaveAddr);
 
-
+void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
+						   uint8_t *pRxBuffer,
+						   uint32_t Len,
+						   uint8_t SlaveAddr);
 
 
 /*********************************************************************
@@ -195,6 +198,8 @@ void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx,
 uint8_t I2C_GetFlagStatus(I2C_RegDef_t *pI2Cx,
 						  uint8_t FlagName);
 
+void I2C_AckControl(I2C_RegDef_t *pI2Cx,
+				    uint8_t EnOrDi);
 
 
 

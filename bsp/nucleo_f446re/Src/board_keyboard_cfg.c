@@ -44,7 +44,7 @@ void Board_KB_Init(void)
     gpio.pGPIOx = KB_ROW_GPIO_PORT;
     gpio.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
     gpio.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-    gpio.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+    gpio.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
     gpio.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 
     for(uint8_t i = 0; i < KB_ROWS; i++)

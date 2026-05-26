@@ -181,7 +181,7 @@ typedef struct
  * 			GPIO_PIN_PD  --> Pull-down enabled
  *
  *********************************************************************/
-#define GPIO_NO_PUPD           		0U
+#define GPIO_PIN_NO_PUPD           	0U
 #define GPIO_PIN_PU            		1U
 #define GPIO_PIN_PD            		2U
 

@@ -35,15 +35,12 @@ int main(void)
 {
     GPIO_Handle_t GpioLed;
 
-    // Enable clock for GPIOC
-    GPIO_PeriClockControl(GPIOC, ENABLE);
-
     // Common configuration for all LEDs
     GpioLed.pGPIOx = GPIOC;
     GpioLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
     GpioLed.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
     GpioLed.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-    GpioLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+    GpioLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
     // Initialize all LED pins
     for(int i = 0; i < NUM_LEDS; i++)
@@ -58,18 +55,15 @@ int main(void)
     	//Step1: Initate the object of type GPIO_Handle_t
     	GPIO_Handle_t GpioLedInt;
 
-    	//Step2: Push Pull Cofiguration for Led, nothing but we are initializing our custom variables(struct var)
+    	//Step2: Push Pull Configuration for Led, nothing but we are initializing our custom variables(struct var)
     	GpioLedInt.pGPIOx = GPIOA;
     	GpioLedInt.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_5;
     	GpioLedInt.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
     	GpioLedInt.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
     	GpioLedInt.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-    	GpioLedInt.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+    	GpioLedInt.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
-    	//Step3: Enable the Clock for GPIOA
-    	GPIO_PeriClockControl(GPIOA, ENABLE);
-
-    	//Step4: Initialize the GPIO LED
+    	//Step3: Initialize the GPIO LED
     	GPIO_Init(&GpioLedInt);
     	/***************************************************End Led Init**************************************************/
 
@@ -90,17 +84,13 @@ int main(void)
     	GpioBtn.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
     	GpioBtn.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
 
-
-    	//Step3: Enable the Clock for GPIOC
-    	GPIO_PeriClockControl(GPIOC, ENABLE);
-
-    	//Step4: Initialize the GPIO Button
+    	//Step3: Initialize the GPIO Button
     	GPIO_Init(&GpioBtn);
     	/*************************************************End Button Init***********************************************/
 
 
 
-    	//Step5: IRQ configurations
+    	//Step4: IRQ configurations
     	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI15);
     	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
 
