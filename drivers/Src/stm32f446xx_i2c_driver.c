@@ -702,19 +702,18 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 		//a. Disabling ACKing
 		I2C_AckControl(pI2CHandle->pI2Cx, I2C_ACK_DISABLE);
 
-		//b. Generate STOP condition
-		I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
-
-		//c. Clear the ADDR flag
+		//b. Clear the ADDR flag
 		I2C_ClearADDRFlag(pI2CHandle->pI2Cx);
 
-		//d. Wait until RxNE becomes 1
+		//c. Wait until RxNE becomes 1
 		while(I2C_GetFlagStatus(pI2CHandle->pI2Cx, I2C_FLAG_RXNE) == FLAG_RESET); //Check if read data register is full
+
+		//d. Generate STOP condition
+		I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 
 		//e. Read Data into buffer (read 1Byte)
 		*pRxBuffer = pI2CHandle->pI2Cx->DR;
 
-		return;
 	}
 	//6. Procedure to read data from slave when Len > 1
 	if(Len > 1U)
