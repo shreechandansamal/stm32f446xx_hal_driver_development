@@ -106,6 +106,18 @@ typedef struct
 
 
 /*********************************************************************
+ * @I2C_SR
+ *********************************************************************
+ * These macros indicate the Repeated Start has set or reset
+ *
+ *********************************************************************/
+#define I2C_SR_ENABLE						SET
+#define I2C_SR_DISABLE						RESET
+
+
+
+
+/*********************************************************************
  * @I2C_Status_Flags
  *********************************************************************
  * These macros provide masking values for I2C status register
@@ -169,12 +181,14 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx);
 void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 						uint8_t *pTxBuffer,
 						uint32_t Len,
-						uint8_t SlaveAddr);
+						uint8_t SlaveAddr,
+						uint8_t Sr);
 
 void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 						   uint8_t *pRxBuffer,
 						   uint32_t Len,
-						   uint8_t SlaveAddr);
+						   uint8_t SlaveAddr,
+						   uint8_t Sr);
 
 
 /*********************************************************************

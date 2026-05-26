@@ -607,7 +607,8 @@ void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx,
 void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 						uint8_t *pTxBuffer,
 						uint32_t Len,
-						uint8_t SlaveAddr)
+						uint8_t SlaveAddr,
+						uint8_t Sr)
 {
 	//1. Generate the START Condition
 	I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -653,8 +654,10 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 	 * 	 Condition.
 	 * 	 Note: Generating STOP, automatically clears the BTF.
 	 */
-	I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
-
+	if(Sr == I2C_SR_DISABLE)//SR means Repeated Start
+	{
+		I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
+	}
 
 
 
@@ -681,7 +684,8 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 						   uint8_t *pRxBuffer,
 						   uint32_t Len,
-						   uint8_t SlaveAddr)
+						   uint8_t SlaveAddr,
+						   uint8_t Sr)
 {
 	//1. Generate the START Condition
 	I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -709,8 +713,10 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 		while(I2C_GetFlagStatus(pI2CHandle->pI2Cx, I2C_FLAG_RXNE) == FLAG_RESET); //Check if read data register is full
 
 		//d. Generate STOP condition
-		I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
-
+		if(Sr == I2C_SR_DISABLE)//SR means Repeated Start
+		{
+			I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
+		}
 		//e. Read Data into buffer (read 1Byte)
 		*pRxBuffer = pI2CHandle->pI2Cx->DR;
 
@@ -734,8 +740,10 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 				I2C_AckControl(pI2CHandle->pI2Cx, I2C_ACK_DISABLE);
 
 				//f. Generate STOP condition
-				I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
-
+				if(Sr == I2C_SR_DISABLE)//SR means Repeated Start
+				{
+					I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
+				}
 			}
 
 			//g. Read the data from data register into buffer

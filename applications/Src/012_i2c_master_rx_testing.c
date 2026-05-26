@@ -116,15 +116,15 @@ int main(void)
 
 		//send first command code: 0x51
 		commandcode = 0x51;
-		I2C_MasterSendData(&I2C1Handle, &commandcode, 1, SLAVE_ADDR);
+		I2C_MasterSendData(&I2C1Handle, &commandcode, 1, SLAVE_ADDR, I2C_SR_ENABLE);
 		//receive the response for 0x51 (length of complete data)
-		I2C_MasterReceiveData(&I2C1Handle, &len, 1, SLAVE_ADDR);
+		I2C_MasterReceiveData(&I2C1Handle, &len, 1, SLAVE_ADDR, I2C_SR_ENABLE);
 
 		//send second command code: 0x52
 		commandcode = 0x52;
-		I2C_MasterSendData(&I2C1Handle, &commandcode, 1, SLAVE_ADDR);
+		I2C_MasterSendData(&I2C1Handle, &commandcode, 1, SLAVE_ADDR, I2C_SR_ENABLE);
 		//receive the response for 0x52 (read complete data)
-		I2C_MasterReceiveData(&I2C1Handle, rcv_buf, len, SLAVE_ADDR);
+		I2C_MasterReceiveData(&I2C1Handle, rcv_buf, len, SLAVE_ADDR, I2C_SR_DISABLE);
 
 		/*this rcv_buf will be not terminated by null character because
 		  at the time of transmission we actually don't receive the null
