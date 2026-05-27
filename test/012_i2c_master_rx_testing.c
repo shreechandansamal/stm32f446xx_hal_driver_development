@@ -4,7 +4,7 @@
  *  Created on: May 26, 2026
  *      Author: chandan
  *
- *      SPI2 Pin Configuration
+ *      I2C1 Pin Configuration
  *      ======================
  *      SDA --> PB7
  *      SCL --> PB6

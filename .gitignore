@@ -34,6 +34,8 @@ sources.mk
 # ========================
 *.launch
 .settings/
+.cproject
+.project
 
 # ========================
 # OS junk
