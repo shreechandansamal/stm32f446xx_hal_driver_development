@@ -728,6 +728,19 @@ _Static_assert(sizeof(I2C_RegDef_t) == 0x28, "I2C_RegDef struct size mismatch!")
 
 
 
+/*
+ * IRQ(Interrupt Request) Numbers of I2C in STM32F446xx MCU
+ */
+#define IRQ_NO_I2C1_EV      			 31U   /*!< I2C1 EVENT global interrupt number */
+#define IRQ_NO_I2C1_ER      			 32U   /*!< I2C1 ERROR global interrupt number */
+#define IRQ_NO_I2C2_EV      			 33U   /*!< I2C2 EVENT global interrupt number */
+#define IRQ_NO_I2C2_ER      			 34U   /*!< I2C2 ERROR global interrupt number */
+#define IRQ_NO_I2C3_EV      			 79U   /*!< I2C3 EVENT global interrupt number */
+#define IRQ_NO_I2C3_ER      			 80U   /*!< I2C3 ERROR global interrupt number */
+
+
+
+
 /*********************************************************************
  * Priority Levels (Processor Specific)
  *********************************************************************/

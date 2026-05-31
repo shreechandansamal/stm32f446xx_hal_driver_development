@@ -56,11 +56,75 @@ typedef struct
  *********************************************************************/
 typedef struct
 {
-	I2C_RegDef_t *pI2Cx;
-	I2C_Config_t I2C_Config;
+	I2C_RegDef_t *pI2Cx;		/*!< Holds the base address of the
+									 I2C peripheral(I2C1/I2C2/I2C3...) */
+	I2C_Config_t I2C_Config;	/*!< Holds I2C configuration settings */
+	uint8_t 	 *pTxBuffer;	/*!< Pointer to application transmit
+									 buffer */
+	uint8_t 	 *pRxBuffer;	/*!< Pointer to application receive
+									 buffer */
+	uint32_t     TxLen;			/*!< Stores remaining number of bytes
+									 to transmit */
+	uint32_t     RxLen;			/*!< Stores remaining number of bytes
+									 to receive */
+	uint8_t		 TxRxState;		/*!< Stores current transmission or
+	 	 	 	 	 	 	 	 	 reception state(I2C is half-duplex
+	 	 	 	 	 	 	 	 	 so used one variable) */
+	uint8_t		 DevAddr;		/*!< Stores slave/device address */
+	uint32_t	 RxSize;		/*!< Stores Rx size */
+	uint8_t		 Sr;			/*!< Stores repeated start value */
 }I2C_Handle_t;
 
 
+
+
+
+/*********************************************************************
+ * @I2C_Application_States
+ *********************************************************************
+ * These macros indicate the current status/state of I2C communication.
+ *
+ * Used mainly in Interrupt-based APIs to avoid collision between
+ * multiple transmissions/receptions.
+ *
+ *********************************************************************/
+#define I2C_READY							0U
+#define I2C_BUSY_IN_RX						1U
+#define I2C_BUSY_IN_TX						2U
+
+
+
+
+/*********************************************************************
+ * @I2C_Application_Events
+ *********************************************************************
+ * These macros are used by the I2C driver to notify the application
+ * about communication events through callback function:
+ *
+ *    I2C_ApplicationEventCallback()
+ *
+ *********************************************************************/
+#define I2C_EV_TX_CMPLT						0U
+#define I2C_EV_RX_CMPLT						1U
+#define I2C_EV_STOP							2U
+
+
+
+
+/*********************************************************************
+ * @I2C_Application_Errors
+ *********************************************************************
+ * These macros are used by the I2C driver to notify the application
+ * about communication errors through callback function:
+ *
+ *    I2C_ApplicationEventCallback()
+ *
+ *********************************************************************/
+#define I2C_ER_BERR  						3U
+#define I2C_ER_ARLO  						4U
+#define I2C_ER_AF    						5U
+#define I2C_ER_OVR   						6U
+#define I2C_ER_TIMEOUT 						7U
 
 
 
@@ -190,6 +254,18 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 						   uint8_t SlaveAddr,
 						   uint8_t Sr);
 
+uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle,
+							 uint8_t *pTxBuffer,
+							 uint32_t Len,
+							 uint8_t SlaveAddr,
+							 uint8_t Sr);
+
+uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,
+								uint8_t *pRxBuffer,
+								uint32_t Len,
+								uint8_t SlaveAddr,
+								uint8_t Sr);
+
 
 /*********************************************************************
  * IRQ Configuration and ISR Handling APIs
@@ -200,6 +276,9 @@ void I2C_IRQInterruptConfig(uint8_t IRQNumber,
 void I2C_IRQPriorityConfig(uint8_t IRQNumber,
 						   uint32_t IRQPriority);
 
+void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle);
+
+void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle);
 
 
 
@@ -215,6 +294,11 @@ uint8_t I2C_GetFlagStatus(I2C_RegDef_t *pI2Cx,
 void I2C_AckControl(I2C_RegDef_t *pI2Cx,
 				    uint8_t EnOrDi);
 
+void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx);
+
+void I2C_CloseTransmission(I2C_Handle_t *pI2CHandle);
+
+void I2C_CloseReception(I2C_Handle_t *pI2CHandle);
 
 
 

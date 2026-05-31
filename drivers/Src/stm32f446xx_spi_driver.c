@@ -200,7 +200,8 @@ void SPI_PeriClockControl(SPI_RegDef_t *pSPIx,
 void SPI_Init(SPI_Handle_t *pSPIHandle)
 {
     // Enable peripheral clock
-    SPI_PeriClockControl(pSPIHandle->pSPIx, ENABLE);
+    SPI_PeriClockControl(pSPIHandle->pSPIx,
+    					 ENABLE);
 
     // Configure SPI_CR1 register
     uint32_t cr1_value = 0;
@@ -864,7 +865,8 @@ void SPI_ReceiveData(SPI_RegDef_t *pSPIx,
 	 while(Len > 0U)
 	 {
 	  // 1. Wait until RXNE flag becomes SET
-	  while(SPI_GetFlagStatus(pSPIx, SPI_FLAG_RXNE) == FLAG_RESET);
+	  while(SPI_GetFlagStatus(pSPIx,
+			  	  	  	  	  SPI_FLAG_RXNE) == FLAG_RESET);
 
 	  // 2. Check DFF bit for frame format
 	  if(pSPIx->CR1 & (1U << SPI_CR1_DFF))
@@ -1285,7 +1287,8 @@ void SPI_TransmitReceiveData(SPI_RegDef_t *pSPIx,
 	while(Len > 0U)
 	{
 		// 1. Wait until TXE flag becomes SET
-		while(SPI_GetFlagStatus(pSPIx, SPI_FLAG_TXE) == FLAG_RESET);
+		while(SPI_GetFlagStatus(pSPIx,
+								SPI_FLAG_TXE) == FLAG_RESET);
 
 		// 2. Check DFF bit
 		if(pSPIx->CR1 & (1U << SPI_CR1_DFF))
@@ -1296,7 +1299,8 @@ void SPI_TransmitReceiveData(SPI_RegDef_t *pSPIx,
 			*((__IO uint16_t *)&pSPIx->DR) = *((uint16_t *)pTxBuffer);
 
 			// Wait until RXNE becomes SET
-			while(SPI_GetFlagStatus(pSPIx, SPI_FLAG_RXNE) == FLAG_RESET);
+			while(SPI_GetFlagStatus(pSPIx,
+									SPI_FLAG_RXNE) == FLAG_RESET);
 
 			// Read received 16-bit data
 			*((uint16_t *)pRxBuffer) = *((__IO uint16_t *)&pSPIx->DR);
@@ -1316,7 +1320,8 @@ void SPI_TransmitReceiveData(SPI_RegDef_t *pSPIx,
 			*((__IO uint8_t *)&pSPIx->DR) = *pTxBuffer;
 
 			// Wait until RXNE becomes SET
-			while(SPI_GetFlagStatus(pSPIx, SPI_FLAG_RXNE) == FLAG_RESET);
+			while(SPI_GetFlagStatus(pSPIx,
+									SPI_FLAG_RXNE) == FLAG_RESET);
 
 			// Read received 8-bit data
 			*pRxBuffer = *((__IO uint8_t *)&pSPIx->DR);

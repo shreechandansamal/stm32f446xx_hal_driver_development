@@ -36,23 +36,18 @@ typedef struct
 {
 	uint8_t GPIO_PinNumber;      /*!< Specifies the GPIO pin number.
 									  Possible values from @GPIO_PIN_NUMBERS */
-
 	uint8_t GPIO_PinMode;        /*!< Specifies the mode of GPIO pin.
 									  Possible values from @GPIO_PIN_MODES */
-
 	uint8_t GPIO_PinSpeed;       /*!< Specifies GPIO output speed.
 									  Applicable only for output mode.
 									  Possible values from @GPIO_PIN_SPEED */
-
 	uint8_t GPIO_PinPuPdControl; /*!< Specifies Pull-up or Pull-down
 									  configuration.
 									  Possible values from @GPIO_PIN_PUPD */
-
 	uint8_t GPIO_PinOPType;      /*!< Specifies output type:
 									  Push-Pull or Open-Drain.
 									  Applicable only for output mode.
 									  Possible values from @GPIO_PIN_OPTYPE */
-
 	uint8_t GPIO_PinAltFunMode;  /*!< Specifies alternate functionality
 									  selection.
 									  Possible values from @GPIO_PIN_ALT */
@@ -77,7 +72,6 @@ typedef struct
 typedef struct
 {
 	GPIO_RegDef_t *pGPIOx;          /*!< Base address of GPIO port */
-
 	GPIO_PinConfig_t GPIO_PinConfig;/*!< GPIO pin configuration settings */
 
 }GPIO_Handle_t;

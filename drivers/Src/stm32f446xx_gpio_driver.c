@@ -49,7 +49,8 @@
  * 								- Read/Write operations
  *
  */
-void GPIO_PeriClockControl(GPIO_RegDef_t *pGPIOx, uint8_t EnorDi)
+void GPIO_PeriClockControl(GPIO_RegDef_t *pGPIOx,
+						   uint8_t EnorDi)
 {
 	if(EnorDi == ENABLE)
 	{
@@ -228,7 +229,8 @@ void GPIO_Init(GPIO_Handle_t *pGPIOHandle)
 	uint32_t temp = 0U;
 
 	/* Enable the peripheral clock for the GPIO port */
-	GPIO_PeriClockControl(pGPIOHandle->pGPIOx, ENABLE);
+	GPIO_PeriClockControl(pGPIOHandle->pGPIOx,
+						  ENABLE);
 
 	/* ============================================================
 	 * 1. Configure GPIO pin mode

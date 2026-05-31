@@ -35,27 +35,20 @@ typedef struct
 {
 	uint8_t SPI_DeviceMode;     /*!< Specifies SPI device mode.
 									 Possible values from @SPI_DeviceMode */
-
 	uint8_t SPI_BusConfig;      /*!< Specifies SPI bus configuration.
 									 Possible values from @SPI_BusConfig */
-
 	uint8_t SPI_SclkSpeed;      /*!< Specifies SPI serial clock speed
 									 (baud rate).
 									 Possible values from @SPI_SclkSpeed */
-
 	uint8_t SPI_DFF;            /*!< Specifies SPI Data Frame Format.
 									 Possible values from @SPI_DFF */
-
 	uint8_t SPI_CPOL;           /*!< Specifies clock polarity.
 									 Possible values from @SPI_CPOL */
-
 	uint8_t SPI_CPHA;           /*!< Specifies clock phase.
 									 Possible values from @SPI_CPHA */
-
 	uint8_t SPI_SSM;            /*!< Specifies Software Slave
 									 Management configuration.
 									 Possible values from @SPI_SSM */
-
 }SPI_Config_t;
 
 
@@ -84,25 +77,17 @@ typedef struct
 {
 	SPI_RegDef_t *pSPIx;        /*!< Holds the base address of the
 									 SPI peripheral (SPI1/SPI2/SPI3...) */
-
 	SPI_Config_t SPIConfig;     /*!< Holds SPI configuration settings */
-
 	uint8_t *pTxBuffer;         /*!< Pointer to application transmit
 									 buffer */
-
 	uint8_t *pRxBuffer;         /*!< Pointer to application receive
 									 buffer */
-
 	uint32_t TxLen;             /*!< Stores remaining number of bytes
 									 to transmit */
-
 	uint32_t RxLen;             /*!< Stores remaining number of bytes
 									 to receive */
-
 	uint8_t TxState;            /*!< Stores current transmission state */
-
 	uint8_t RxState;            /*!< Stores current reception state */
-
 }SPI_Handle_t;
 
 
