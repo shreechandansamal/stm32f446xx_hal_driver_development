@@ -72,7 +72,7 @@ typedef struct
 	 	 	 	 	 	 	 	 	 so used one variable) */
 	uint8_t		 DevAddr;		/*!< Stores slave/device address */
 	uint32_t	 RxSize;		/*!< Stores Rx size */
-	uint8_t		 Sr;			/*!< Stores repeated start value */
+	uint8_t		 RepeatedStart;			/*!< Stores repeated start value */
 }I2C_Handle_t;
 
 
@@ -246,25 +246,25 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 						uint8_t *pTxBuffer,
 						uint32_t Len,
 						uint8_t SlaveAddr,
-						uint8_t Sr);
+						uint8_t RepeatedStart);
 
 void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 						   uint8_t *pRxBuffer,
 						   uint32_t Len,
 						   uint8_t SlaveAddr,
-						   uint8_t Sr);
+						   uint8_t RepeatedStart);
 
 uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle,
 							 uint8_t *pTxBuffer,
 							 uint32_t Len,
 							 uint8_t SlaveAddr,
-							 uint8_t Sr);
+							 uint8_t RepeatedStart);
 
 uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,
 								uint8_t *pRxBuffer,
 								uint32_t Len,
 								uint8_t SlaveAddr,
-								uint8_t Sr);
+								uint8_t RepeatedStart);
 
 
 /*********************************************************************

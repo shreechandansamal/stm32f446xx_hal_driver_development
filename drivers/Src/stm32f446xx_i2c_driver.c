@@ -5,7 +5,7 @@
  *      Author: chandan
  */
 
-#include"stm32f446xx_i2c_driver.h"
+#include "stm32f446xx_i2c_driver.h"
 
 uint16_t AHB_PreScaler[8U] = {2U, 4U, 8U, 16U, 64U, 128U, 256U, 512U};
 uint8_t APB1_PreScaler[4U] = { 2U, 4U, 8U, 16U};
@@ -548,7 +548,7 @@ static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx,
 static void I2C_ClearADDRFlag(I2C_Handle_t *pI2CHandle)
 {
 	//check he device mode
-	if(pI2CHandle->pI2Cx->SR2 & (1U << I2C_SR2_MSL))
+	if(pI2CHandle->pI2Cx->SR2 & (1U << I2C_SR2_MSL)) //Bug: here ADDR is getting clear, so need to fix this Bug ASAP
 	{
 		//device is in master mode
 		if (pI2CHandle->TxRxState == I2C_BUSY_IN_RX)
@@ -642,7 +642,7 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 						uint8_t *pTxBuffer,
 						uint32_t Len,
 						uint8_t SlaveAddr,
-						uint8_t Sr)
+						uint8_t RepeatedStart)
 {
 	//1. Generate the START Condition
 	I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -695,7 +695,7 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 	 * 	 Condition.
 	 * 	 Note: Generating STOP, automatically clears the BTF.
 	 */
-	if(Sr == I2C_SR_DISABLE)
+	if(RepeatedStart == I2C_SR_DISABLE)
 	{
 		I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 	}
@@ -727,7 +727,7 @@ uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle,
 							 uint8_t *pTxBuffer,
 							 uint32_t Len,
 							 uint8_t SlaveAddr,
-							 uint8_t Sr)
+							 uint8_t RepeatedStart)
 {
 	uint8_t busystate = pI2CHandle->TxRxState;
 
@@ -737,7 +737,7 @@ uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle,
 		pI2CHandle->TxLen = Len;
 		pI2CHandle->TxRxState = I2C_BUSY_IN_TX;
 		pI2CHandle->DevAddr = SlaveAddr;
-		pI2CHandle->Sr = Sr;
+		pI2CHandle->RepeatedStart = RepeatedStart;
 
 		//Implement code to Generate START Condition
 		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -781,7 +781,7 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 						   uint8_t *pRxBuffer,
 						   uint32_t Len,
 						   uint8_t SlaveAddr,
-						   uint8_t Sr)
+						   uint8_t RepeatedStart)
 {
 	//1. Generate the START Condition
 	I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -815,7 +815,7 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 								I2C_FLAG_RXNE) == FLAG_RESET); //Check if read data register is full
 
 		//d. Generate STOP condition
-		if(Sr == I2C_SR_DISABLE)
+		if(RepeatedStart == I2C_SR_DISABLE)
 		{
 			I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 		}
@@ -844,7 +844,7 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 							   I2C_ACK_DISABLE);
 
 				//f. Generate STOP condition
-				if(Sr == I2C_SR_DISABLE)
+				if(RepeatedStart == I2C_SR_DISABLE)
 				{
 					I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 				}
@@ -890,7 +890,7 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,
 								uint8_t *pRxBuffer,
 								uint32_t Len,
 								uint8_t SlaveAddr,
-								uint8_t Sr)
+								uint8_t RepeatedStart)
 {
 	uint8_t busystate = pI2CHandle->TxRxState;
 
@@ -901,7 +901,7 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,
 		pI2CHandle->TxRxState = I2C_BUSY_IN_RX;
 		pI2CHandle->RxSize = Len; //Rxsize is used in the ISR code to manage the data reception
 		pI2CHandle->DevAddr = SlaveAddr;
-		pI2CHandle->Sr = Sr;
+		pI2CHandle->RepeatedStart = RepeatedStart;
 
 		//Implement code to Generate START Condition
 		I2C_GenerateStartCondition(pI2CHandle->pI2Cx);
@@ -1500,7 +1500,7 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle)
 				if(pI2CHandle->TxLen == 0)
 				{
 					//a. generate the STOP condition
-					if(pI2CHandle->Sr == I2C_SR_DISABLE)
+					if(pI2CHandle->RepeatedStart == I2C_SR_DISABLE)
 					{
 						I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 					}
@@ -1515,7 +1515,7 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle)
 		}
 		else if(pI2CHandle->TxRxState == I2C_BUSY_IN_RX)
 		{
-			;//nothing to do RX in BTF
+			;//nothing to do RX in BTF, because it is Byte Transfer Finished
 		}
 
 	}
@@ -1526,6 +1526,7 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle)
 	   For master this flag will never be set
 	   The below code block will not be executed by the master
 	   since STOPF will not set in master mode */
+	//STOPF will be only set by slave
 	temp3 = pI2CHandle->pI2Cx->SR1 & (1U << I2C_SR1_STOPF);
 	if(temp1 && temp3)
 	{
@@ -1744,14 +1745,13 @@ static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle)
 		//b. decrement the RxLen
 		pI2CHandle->RxLen--;
 
-		//c.BugFix: generate the stop condition (added stop condition)
-		if(pI2CHandle->Sr == I2C_SR_DISABLE)
+		//c. generate the stop condition
+		if(pI2CHandle->RepeatedStart == I2C_SR_DISABLE)
 		{
 			I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
 		}
-
-
 	}
+
 	if(pI2CHandle->RxSize > 1U)
 	{
 		if(pI2CHandle->RxLen == 2U)
@@ -1761,11 +1761,17 @@ static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle)
 						   I2C_ACK_DISABLE);
 		}
 
-		//BugFix: added this if condition
+		/* Important:
+		 * STOP must be generated when RxLen == 1 in the interrupt
+		 * receive path. Generating STOP at RxLen == 2 causes the
+		 * next transaction to fail.
+		 */
         if (pI2CHandle->RxLen == 1U)
         {
-            if (pI2CHandle->Sr == I2C_SR_DISABLE)
+            if (pI2CHandle->RepeatedStart == I2C_SR_DISABLE)
+            {
                 I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
+            }
         }
 
 			//a. read the data from DR
@@ -1777,19 +1783,14 @@ static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle)
 			//c. Increment the address buffer
 			pI2CHandle->pRxBuffer++;
 	}
+
 	if(pI2CHandle->RxLen == 0U)
 	{
 		//close the I2C data reception and notify the application
-		//a. generate the stop condition (BugFix: commented stop condition)
-//		if(pI2CHandle->Sr == I2C_SR_DISABLE)
-//		{
-//			I2C_GenerateStopCondition(pI2CHandle->pI2Cx);
-//		}
-
-		//b. Close the I2C RX
+		//a. Close the I2C RX
 		I2C_CloseReception(pI2CHandle);
 
-		//c. Notify the application
+		//b. Notify the application
 		I2C_ApplicationEventCallback(pI2CHandle,
 									 I2C_EV_RX_CMPLT);
 	}
