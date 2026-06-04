@@ -107,8 +107,8 @@ typedef struct
 #define I2C_EV_TX_CMPLT						0U
 #define I2C_EV_RX_CMPLT						1U
 #define I2C_EV_STOP							2U
-
-
+#define I2C_EV_DATA_REQ						3U
+#define I2C_EV_DATA_RCV						4U
 
 
 /*********************************************************************
@@ -120,11 +120,11 @@ typedef struct
  *    I2C_ApplicationEventCallback()
  *
  *********************************************************************/
-#define I2C_ER_BERR  						3U
-#define I2C_ER_ARLO  						4U
-#define I2C_ER_AF    						5U
-#define I2C_ER_OVR   						6U
-#define I2C_ER_TIMEOUT 						7U
+#define I2C_ER_BERR  						5U
+#define I2C_ER_ARLO  						6U
+#define I2C_ER_AF    						7U
+#define I2C_ER_OVR   						8U
+#define I2C_ER_TIMEOUT 						9U
 
 
 
@@ -266,6 +266,20 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,
 								uint8_t SlaveAddr,
 								uint8_t RepeatedStart);
 
+/* Note- Slave functions are callback events from Driver to Slave
+ * Application. So, these below Slave APIs will be stay in the Driver,
+ * and when the events happens Application Callback occurs.
+ */
+void I2C_SlaveSendData(I2C_RegDef_t *pI2Cx,
+					   uint8_t data); /* receive request for data from
+						 	 	 	   * master, send data from slave
+						 	 	 	   * to master */
+
+uint8_t I2C_SlaveReceiveData(I2C_RegDef_t *pI2Cx); /* send data from
+ 	 	 	 	 	 	 	 	 	 	 	 	 	* master, received
+ 	 	 	 	 	 	 	 	 	 	 	 	 	* by slave */
+
+
 
 /*********************************************************************
  * IRQ Configuration and ISR Handling APIs
@@ -300,7 +314,8 @@ void I2C_CloseTransmission(I2C_Handle_t *pI2CHandle);
 
 void I2C_CloseReception(I2C_Handle_t *pI2CHandle);
 
-
+void I2C_SlaveEnableDisableCallbackEvents(I2C_RegDef_t *pI2Cx,
+		                                  uint8_t EnorDi);
 
 /*********************************************************************
  * I2C Application Callback
@@ -315,21 +330,6 @@ void I2C_CloseReception(I2C_Handle_t *pI2CHandle);
  *********************************************************************/
 void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle,
 								  uint8_t AppEvent);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif /* INC_STM32F446XX_I2C_DRIVER_H_ */

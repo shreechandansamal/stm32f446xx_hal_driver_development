@@ -11,7 +11,8 @@
  *
  *      ALT function mode: AF4
  *
- *      Task: (it will same as we did for test 012, but this time we will use  INTERRUPT  based API)
+ *      Task: I2C Master(STM32) and I2C Slave(Arduino) communication
+ *      (it will same as we did for test 012, but this time we will use  INTERRUPT  based API)
  *      When button on the master is pressed, master should read and display data from Arduino Slave connected.
  *      First master has to get the length of the data from the slave to read subsequent data from the slave.
  *      1. Use I2C SCL = 100KHz(Standard Mode)
@@ -37,6 +38,7 @@ I2C_Handle_t I2C1Handle = {0};
 
 //flag variable
 uint8_t rxCompltFlag = RESET;
+uint8_t buttonPressFlag = RESET;
 
 
 //receive buffer(e.g. 32 bytes
@@ -67,6 +69,14 @@ void I2C1_GPIOInit(void)
 	//SCL
 	I2C1Pins.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_6;
 	GPIO_Init(&I2C1Pins);
+
+	//I2C IRQ Priority Configuration
+	I2C_IRQPriorityConfig(IRQ_NO_I2C1_EV, NVIC_IRQ_PRI1);
+	I2C_IRQPriorityConfig(IRQ_NO_I2C1_ER, NVIC_IRQ_PRI0);
+	//I2C IRQ Configuration
+	I2C_IRQInterruptConfig(IRQ_NO_I2C1_EV, ENABLE);
+	I2C_IRQInterruptConfig(IRQ_NO_I2C1_ER, ENABLE);
+
 }
 
 
@@ -89,11 +99,16 @@ void Onboard_ButtonInit(void)
 	//Button Configuration
 	GpioBtn.pGPIOx = GPIOC;
 	GpioBtn.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_13;
-	GpioBtn.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
+	GpioBtn.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IT_FT;
 	GpioBtn.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 	GpioBtn.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_NO_PUPD;
 
 	GPIO_Init(&GpioBtn);
+
+	//EXTI IRQ Priority Configuration
+	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI15);
+	//EXTI IRQ Configuration
+	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
 }
 
 
@@ -106,12 +121,6 @@ int main(void)
 	I2C1_GPIOInit();
 	I2C1_Init();
 
-	//I2C IRQ Configuration
-	I2C_IRQInterruptConfig(IRQ_NO_I2C1_EV, ENABLE);
-	I2C_IRQInterruptConfig(IRQ_NO_I2C1_ER, ENABLE);
-	//after IT Config you can call the IT priority api, but here we only have one IT, so not needed.
-
-
 	//enable the i2c peripheral
 	I2C_PeripheralControl(I2C1,ENABLE);
 
@@ -121,7 +130,8 @@ int main(void)
 	while(1)
 	{
 		//wait till button pressed
-		while(GPIO_ReadFromInputPin(GPIOC, GPIO_PIN_NO_13));
+//		while(GPIO_ReadFromInputPin(GPIOC, GPIO_PIN_NO_13));
+		while(buttonPressFlag == RESET);
 		delay();//for de-bounce
 
 		//send first command code: 0x51
@@ -149,6 +159,8 @@ int main(void)
 			rcv_buf[len+1] = '\0';
 			printf("Received data from slave: %s",rcv_buf);
 			rxCompltFlag = RESET;
+
+			buttonPressFlag = RESET;
 	}
 
 
@@ -169,7 +181,13 @@ void I2C1_ER_IRQHandler()
 	I2C_ER_IRQHandling(&I2C1Handle);
 }
 
+//EXTI ISR Handler
+void EXTI15_10_IRQHandler(void)
+{
+	GPIO_IRQHandling(GPIO_PIN_NO_13);
+	buttonPressFlag = SET;
 
+}
 
 
 void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle,

@@ -7,13 +7,13 @@ This project focuses on low-level register programming, driver abstraction, inte
 
 ## 📊 Current Status
 
-* Version: **v0.2.0**
+* Version: **v0.3.0**
 * Status:
 
   * ✅ GPIO Driver Complete
-  * ✅ SPI Driver (Polling + Interrupt APIs)
-* Next Target: **I2C Driver**
-
+  * ✅ SPI Driver Complete (Polling + Interrupt APIs)
+  * ✅ I2C Driver Complete (Polling + Interrupt APIs)
+* Next Target: **USART Driver**
 ---
 
 ## 📌 Overview
@@ -38,15 +38,15 @@ No HAL or external abstraction libraries are used.
 ### GPIO Features
 
 * Peripheral Clock Control APIs
-* GPIO initialization APIs
-* Input / Output mode configuration
-* Push-Pull / Open-Drain configuration
-* Speed configuration
-* Pull-up / Pull-down configuration
-* GPIO read/write APIs
-* Interrupt-based GPIO handling (EXTI)
-* IRQ priority configuration
-* Multiple GPIO test applications
+* GPIO Initialization APIs
+* Input / Output Mode Configuration
+* Push-Pull / Open-Drain Configuration
+* Speed Configuration
+* Pull-up / Pull-down Configuration
+* GPIO Read/Write APIs
+* Interrupt-Based GPIO Handling (EXTI)
+* IRQ Priority Configuration
+* Multiple GPIO Test Applications
 
 ---
 
@@ -61,43 +61,128 @@ No HAL or external abstraction libraries are used.
 * Clock Phase (CPHA)
 * Software Slave Management (SSM)
 * Hardware NSS Output Management (SSOE)
-* Configurable baud-rate prescaler
-* 8-bit and 16-bit Data Frame Format support
+* Configurable Baud Rate Prescaler
+* 8-bit and 16-bit Data Frame Support
 
 ---
 
 ### SPI Polling APIs
 
-* Blocking transmit API
-* Blocking receive API
-* Full-duplex transmit/receive API
-* Busy flag handling
-* Proper TXE/RXNE synchronization
+* Blocking Transmit API
+* Blocking Receive API
+* Full-Duplex Transmit/Receive API
+* Busy Flag Handling
+* Proper TXE/RXNE Synchronization
 
 ---
 
 ### SPI Interrupt APIs
 
-* Interrupt-based transmission
-* Interrupt-based reception
-* TXE interrupt handling
-* RXNE interrupt handling
-* Overrun (OVR) error interrupt handling
-* IRQ enable/disable APIs
-* NVIC priority configuration APIs
-* Application callback mechanism
+* Interrupt-Based Transmission
+* Interrupt-Based Reception
+* TXE Interrupt Handling
+* RXNE Interrupt Handling
+* Overrun (OVR) Error Interrupt Handling
+* IRQ Enable/Disable APIs
+* NVIC Priority Configuration APIs
+* Application Callback Mechanism
 
 ---
 
 ### SPI Driver Improvements
 
-* Proper volatile register access for SPI DR register
-* Explicit 8-bit and 16-bit register access handling
-* Even-length validation for 16-bit transfers
-* Safe interrupt close/reset handling
-* OVR flag clearing sequence implemented
-* Better pointer casting and register access clarity
-* Improved register-level comments/documentation
+* Proper Volatile Register Access
+* Explicit 8-bit and 16-bit Register Access Handling
+* Even-Length Validation for 16-bit Transfers
+* Safe Interrupt Close/Reset Handling
+* OVR Flag Clearing Sequence
+* Improved Register-Level Documentation
+
+---
+
+# ✅ v0.3.0 - I2C Driver
+
+### I2C Core Features
+
+* I2C Peripheral Initialization
+* Peripheral Clock Management
+* Peripheral Enable/Disable Control
+* Standard Mode (100 kHz) Support
+* Fast Mode (400 kHz) Support
+* Fast Mode Duty Cycle Configuration
+* Own Address Configuration
+* ACK Enable/Disable Control
+* START Condition Generation
+* STOP Condition Generation
+* Address Phase Management
+* APB1 Clock-Based Timing Calculation
+* CCR Calculation
+* TRISE Calculation
+
+---
+
+### I2C Polling APIs
+
+* Master Transmit (Blocking)
+* Master Receive (Blocking)
+* Single-Byte Reception Handling
+* Multi-Byte Reception Handling
+* ACK/NACK Management
+* Repeated START Support
+* Address Flag Handling
+* TXE/RXNE Polling
+* BTF Synchronization
+* Communication Completion Handling
+
+---
+
+### I2C Interrupt APIs
+
+* Master Transmit (Interrupt Mode)
+* Master Receive (Interrupt Mode)
+* Event Interrupt Handling
+* Error Interrupt Handling
+* TXE Interrupt Processing
+* RXNE Interrupt Processing
+* SB Event Handling
+* ADDR Event Handling
+* BTF Event Handling
+* STOPF Event Handling
+
+---
+
+### I2C Error Handling
+
+* Bus Error (BERR)
+* Arbitration Lost (ARLO)
+* Acknowledge Failure (AF)
+* Overrun/Underrun (OVR)
+* Timeout Detection
+* Application Error Callback Notification
+
+---
+
+### I2C Slave Features
+
+* Slave Transmit Support
+* Slave Receive Support
+* Slave Event Callback Mechanism
+* Data Request Callback
+* Data Receive Callback
+* STOP Detection Callback
+
+---
+
+### I2C Driver Improvements
+
+* STM32-Compliant ADDR Flag Clearing
+* Proper Single-Byte Receive Sequence
+* Correct ACK/NACK Timing Control
+* Repeated START Transaction Support
+* Interrupt-Based State Machine
+* Safe Transmission/Reception Close Handling
+* Application Callback Architecture
+* Enhanced Documentation and Register-Level Comments
 
 ---
 
@@ -123,21 +208,22 @@ No HAL or external abstraction libraries are used.
 * Avoid HAL and write everything from scratch
 * Improve interrupt-driven peripheral handling
 * Learn industrial embedded driver design
-* Prepare for:
 
-  * GPIO
-  * SPI
-  * I2C
-  * USART
-  * TIM
-  * PWM
-  * ADC
-  * CAN
-  * Low Power
-  * DMA
-  * RTOS integration
-  * Bootloader development
-  * more..
+Prepare drivers for:
+
+* GPIO
+* SPI
+* I2C
+* USART
+* TIM
+* PWM
+* ADC
+* CAN
+* Low Power Modes
+* DMA
+* RTOS Integration
+* Bootloader Development
+* More...
 
 ---
 
@@ -151,10 +237,11 @@ MAJOR.MINOR.PATCH
 
 | Version | Description                           |
 | ------- | ------------------------------------- |
-| v0.1.0  | GPIO driver complete                  |
-| v0.2.0  | SPI polling + interrupt driver added  |
-| v0.x.x  | Development phase                     |
-| v1.0.0  | Stable driver framework (future goal) |
+| v0.1.0  | GPIO Driver Complete                  |
+| v0.2.0  | SPI Driver Added                      |
+| v0.3.0  | I2C Driver Added                      |
+| v0.x.x  | Development Phase                     |
+| v1.0.0  | Stable Driver Framework (Future Goal) |
 
 ---
 
@@ -162,43 +249,116 @@ MAJOR.MINOR.PATCH
 
 * [x] GPIO Driver
 * [x] SPI Driver
-* [ ] SPI Driver Refactor (Industrial-grade IT/DMA architecture)
-* [ ] I2C Driver
+* [x] I2C Driver
+* [ ] SPI Driver Refactor (Industrial-Grade IT/DMA Architecture)
 * [ ] USART Driver
+* [ ] Timer Driver
+* [ ] PWM Driver
+* [ ] ADC Driver
 * [ ] DMA Support
 * [ ] RTOS Integration (FreeRTOS)
 * [ ] Bootloader Development
 
 ---
-
 ## 🧪 Testing
 
-Test cases are available under:
+Test applications are available under:
 
 ```text
 test/
 ```
 
-### Current Test Coverage
+### Test Directory
 
-#### GPIO Tests
+```text
+test
+├── 001_led_toggle_pp_od_gpio.c
+├── 002_inbuilt_led_button_gpio.c
+├── 003_external_led_button_gpio.c
+├── 004_button_interrupt_gpio.c
+├── 005_interrupt_delay_halt_test_gpio.c
+├── 006_spi_tx_testing.c
+├── 007_spi_master_tx_rx_fd.c
+├── 008_spi_slave_rx_tx_fd.c
+├── 009_spi_master_tx_rx_fd_it.c
+├── 010_spi_slave_rx_tx_fd_it.c
+├── 011_i2c_master_tx_testing.c
+├── 012_i2c_master_rx_testing.c
+├── 013_i2c_master_rx_testing_it.c
+├── 014_i2c_slave_tx_string.c
+├── 015_i2c_slave_tx_string2.c
+├── AHT10_I2C.c
+├── gpio_app_keyboard_test.c
+└── RFID-RC522_SPI.c
+```
 
-* LED toggle (onboard / external)
-* Button input handling
-* External interrupt handling
-* Pull-up / pull-down validation
-* GPIO speed tests
+### GPIO Tests
 
-#### SPI Tests
+| Test File                            | Description                                   |
+| ------------------------------------ | --------------------------------------------- |
+| 001_led_toggle_pp_od_gpio.c          | Push-Pull and Open-Drain output validation    |
+| 002_inbuilt_led_button_gpio.c        | On-board button and LED interaction           |
+| 003_external_led_button_gpio.c       | External button and LED interfacing           |
+| 004_button_interrupt_gpio.c          | GPIO interrupt handling using EXTI            |
+| 005_interrupt_delay_halt_test_gpio.c | Interrupt latency and blocking behavior study |
+| gpio_app_keyboard_test.c             | Matrix keyboard GPIO application testing      |
 
-* SPI polling-based transmission
-* SPI interrupt-based transmission
-* Full-duplex communication testing
-* Master-slave communication
-* Hardware NSS handling
-* OVR error handling
-* Data reception using interrupts
+### SPI Tests
 
+| Test File                    | Description                             |
+| ---------------------------- | --------------------------------------- |
+| 006_spi_tx_testing.c         | Basic SPI transmission testing          |
+| 007_spi_master_tx_rx_fd.c    | Full-duplex master communication        |
+| 008_spi_slave_rx_tx_fd.c     | Full-duplex slave communication         |
+| 009_spi_master_tx_rx_fd_it.c | Interrupt-driven master communication   |
+| 010_spi_slave_rx_tx_fd_it.c  | Interrupt-driven slave communication    |
+| RFID-RC522_SPI.c             | RFID-RC522 module interfacing using SPI |
+
+### I2C Tests
+
+| Test File                      | Description                                                         |
+| ------------------------------ | ------------------------------------------------------------------- |
+| 011_i2c_master_tx_testing.c    | Master transmit operation validation                                |
+| 012_i2c_master_rx_testing.c    | Master receive operation validation                                 |
+| 013_i2c_master_rx_testing_it.c | Interrupt-driven master receive testing                             |
+| 014_i2c_slave_tx_string.c      | Slave transmit functionality                                        |
+| 015_i2c_slave_tx_string2.c     | Advanced slave transmit testing                                     |
+| AHT10_I2C.c                    | Real sensor interfacing using AHT10 temperature and humidity sensor |
+
+### Validation Coverage
+
+#### GPIO
+
+* Input and Output Modes
+* Push-Pull Configuration
+* Open-Drain Configuration
+* External Interrupt Handling
+* Button Debouncing Experiments
+* GPIO-Based Keyboard Interface
+
+#### SPI
+
+* Polling-Based Communication
+* Interrupt-Based Communication
+* Master Mode Operation
+* Slave Mode Operation
+* Full-Duplex Data Transfer
+* External Device Communication (RC522 RFID)
+
+#### I2C
+
+* Master Transmit Operations
+* Master Receive Operations
+* Interrupt-Based Reception
+* Slave Transmit Operations
+* ACK/NACK Handling
+* START and Repeated START Sequences
+* Real Sensor Communication (AHT10)
+* Multi-Byte Data Transfers
+* Event and Error Interrupt Validation
+
+```
+```
 ---
 
 ## 🛠️ Build & Run
@@ -210,7 +370,7 @@ test/
 ### IDE
 
 * STM32CubeIDE
-* Makefile-based builds possible
+* Makefile-Based Builds Possible
 
 ### Steps
 
@@ -231,29 +391,31 @@ test/
 
 This project focuses on:
 
-* Embedded C programming
-* Register-level MCU control
-* Pointer and memory manipulation
-* Peripheral driver abstraction
-* Interrupt handling
-* Embedded debugging
-* Bare-metal architecture design
-* Hardware register access patterns
+* Embedded C Programming
+* Register-Level MCU Control
+* Pointer and Memory Manipulation
+* Peripheral Driver Abstraction
+* Interrupt Handling
+* Embedded Debugging
+* Bare-Metal Architecture Design
+* Hardware Register Access Patterns
 
 ---
 
 ## 🧠 Key Concepts Practiced
 
-* Memory mapped IO
-* Volatile register access
-* Pointer casting
-* Register bit manipulation
-* Interrupt-driven communication
-* Peripheral state management
-* Full duplex SPI communication
-* Half duplex SPI communication
-* Hardware/software synchronization
-* Embedded API design
+* Memory-Mapped I/O
+* Volatile Register Access
+* Pointer Casting
+* Register Bit Manipulation
+* Interrupt-Driven Communication
+* Peripheral State Management
+* SPI Communication Protocol
+* I2C Communication Protocol
+* ACK/NACK Handling
+* Clock Stretching Awareness
+* Hardware/Software Synchronization
+* Embedded API Design
 
 ---
 
@@ -267,5 +429,5 @@ Shree Chandan Samal
 
 This is a learning-driven project focused on understanding embedded systems deeply through practical driver development.
 
-The codebase will continuously evolve as new peripherals, better architectures, and advanced embedded concepts are explored.
+The codebase will continuously evolve as new peripherals, improved architectures, advanced debugging techniques, and industrial-grade embedded concepts are explored.
 

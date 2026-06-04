@@ -69,7 +69,9 @@ static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle);
  *                         register, the corresponding peripheral
  *                         clock must be enabled.
  *
- *                      4. If peripheral clock is not enabled:
+ *                      4. Accessing peripheral registers while
+ *  					   the clock is disabled may produce
+ *  					   undefined results:
  *                           - Register access may not work properly
  *                           - Peripheral configuration will fail
  *                           - I2C communication will not operate
@@ -131,7 +133,7 @@ void I2C_PeriClockControl(I2C_RegDef_t *pI2Cx,
  * @return            -
  *
  * @Note              - future implementation
-
+ *
  */
 static uint32_t  RCC_GetPLLOutputClock()
 {
@@ -141,17 +143,83 @@ static uint32_t  RCC_GetPLLOutputClock()
 
 
 /*********************************************************************
- * @fn      		  - RCC_GetPCLK1Value
+ * @fn                - RCC_GetPCLK1Value
  *
- * @brief             - Calculate the Peripheral Clock Speed of APB1
+ * @brief             - Calculate the current APB1 peripheral clock
+ *                      frequency.
  *
- * @param[in]         - void
+ * @param[in]         - none
  *
- * @return            - pclk1(Hz)
+ * @return            - APB1 peripheral clock frequency in Hertz (Hz)
  *
- * @Note              - this function is used for calculate the speed
- * 						of APB1
-
+ * @Note              -
+ *                      1. This function determines the clock source
+ *                         currently selected as the System Clock
+ *                         (SYSCLK).
+ *
+ *                      2. Supported clock sources:
+ *
+ *                           - HSI (High-Speed Internal Oscillator)
+ *                           - HSE (High-Speed External Oscillator)
+ *                           - PLL Output Clock
+ *
+ *                      3. The function reads the SWS bits in the
+ *                         RCC_CFGR register to identify the active
+ *                         system clock source.
+ *
+ *                      4. After determining SYSCLK frequency, the
+ *                         configured AHB prescaler is applied to
+ *                         calculate the HCLK frequency.
+ *
+ *                      5. The configured APB1 prescaler is then
+ *                         applied to obtain the final PCLK1
+ *                         frequency.
+ *
+ *                      6. Clock relationship:
+ *
+ *                              SYSCLK
+ *                                 |
+ *                                 v
+ *                               AHB Prescaler
+ *                                 |
+ *                                 v
+ *                                HCLK
+ *                                 |
+ *                                 v
+ *                              APB1 Prescaler
+ *                                 |
+ *                                 v
+ *                               PCLK1
+ *
+ *                      7. PCLK1 is used by peripherals connected
+ *                         to the APB1 bus such as:
+ *
+ *                           - I2C1 / I2C2 / I2C3
+ *                           - USART2
+ *                           - SPI2 / SPI3
+ *                           - TIM2-TIM7
+ *                           - Other APB1 peripherals
+ *
+ *                      8. This function is commonly used by
+ *                         peripheral drivers when timing-related
+ *                         register values must be calculated
+ *                         dynamically.
+ *
+ *                      9. Example use cases:
+ *
+ *                           - I2C CCR calculation
+ *                           - I2C TRISE calculation
+ *                           - USART baud rate calculation
+ *                           - Timer frequency calculations
+ *
+ *                     10. PLL clock calculation is delegated to
+ *                         RCC_GetPLLOutputClock().
+ *
+ *                     11. The returned frequency reflects the
+ *   					   current RCC clock configuration at
+ *   					   runtime and may change if the system
+ *   					   clock configuration is modified.
+ *
  */
 static uint32_t RCC_GetPCLK1Value(void)
 {
@@ -218,6 +286,105 @@ static uint32_t RCC_GetPCLK1Value(void)
  * @return            - none
  *
  * @Note              -
+ *                      1. This function configures the I2C peripheral
+ *                         registers according to the user-provided
+ *                         configuration.
+ *
+ *                      2. Before configuring the I2C peripheral,
+ *                         the corresponding peripheral clock is
+ *                         enabled internally.
+ *
+ *                      3. This function only configures the I2C
+ *                         peripheral registers.
+ *                         It does NOT enable the I2C peripheral.
+ *
+ *                      4. The I2C peripheral is enabled separately
+ *                         using:
+ *
+ *                              I2C_PeripheralControl()
+ *
+ *                      5. The following I2C parameters are configured:
+ *
+ *                           - Peripheral Input Clock Frequency
+ *                               CR2[FREQ]
+ *
+ *                           - Device Own Address
+ *                               OAR1[ADD]
+ *
+ *                           - Serial Clock Speed (SCL)
+ *                               CCR Register
+ *
+ *                           - Fast Mode Duty Cycle
+ *                               CCR[DUTY]
+ *
+ *                           - Maximum Rise Time
+ *                               TRISE Register
+ *
+ *                      6. The APB1 peripheral clock frequency is
+ *                         obtained dynamically using:
+ *
+ *                              RCC_GetPCLK1Value()
+ *
+ *                         This value is required for CCR and TRISE
+ *                         calculations.
+ *
+ *                      7. Own Address configuration is required when
+ *                         the device operates as an I2C slave and is
+ *                         stored in the OAR1 register.
+ *
+ *                      8. Both I2C operating modes are supported:
+ *
+ *                           - Standard Mode (SM)
+ *                               Up to 100 kHz
+ *
+ *                           - Fast Mode (FM)
+ *                               Up to 400 kHz
+ *
+ *                      9. For Standard Mode:
+ *
+ *                           - CCR is calculated using:
+ *
+ *                                 CCR = FPCLK1 / (2 × FSCL)
+ *
+ *                           - SCL high and low periods are equal.
+ *
+ *                     10. For Fast Mode:
+ *
+ *                           Two duty cycle options are supported:
+ *
+ *                           Duty = 0 (Tlow/Thigh = 2)
+ *
+ *                               CCR = FPCLK1 / (3 × FSCL)
+ *
+ *                           Duty = 1 (Tlow/Thigh = 16/9)
+ *
+ *                               CCR = FPCLK1 / (25 × FSCL)
+ *
+ *                     11. TRISE is configured according to the
+ *                         maximum rise-time requirements specified
+ *                         in the I2C protocol specification.
+ *
+ *                           Standard Mode:
+ *                               Maximum rise time = 1000 ns
+ *
+ *                           Fast Mode:
+ *                               Maximum rise time = 300 ns
+ *
+ *                     12. GPIO pins used for SDA and SCL must be
+ *                         configured in Alternate Function Open-Drain
+ *                         mode before enabling I2C communication.
+ *
+ *                     13. External pull-up resistors are required
+ *                         on SDA and SCL lines because I2C uses
+ *                         open-drain signaling.
+ *
+ *                     14. The I2C peripheral must remain disabled
+ *                         (PE = 0) while timing-related registers
+ *                         such as CR2, CCR and TRISE are being
+ *                         configured.
+ *
+ *                     15. This driver currently supports
+ *   					   7-bit addressing mode.
  *
  */
 void I2C_Init(I2C_Handle_t *pI2CHandle)
@@ -229,36 +396,32 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
     I2C_PeriClockControl(pI2CHandle->pI2Cx,
     					 ENABLE);
 
-/*    //a. Configure ACK Control Bit of CR1 (as ACK bit can be only ENABLE(set) while PE=1,
- * 						                     so this part has shifted to I2C_PeripheralControl
- * 						                     function)
-    tempreg |= pI2CHandle->I2C_Config.I2C_ACKControl << I2C_CR1_ACK;
-    pI2CHandle->pI2Cx->CR1 = tempreg; */
-
-    //b. Configure the FREQ field Bit of CR2
+    //a. Configure the FREQ field Bit of CR2
     tempreg = 0U;
-    tempreg |= RCC_GetPCLK1Value() / 1000000U; /*divide by 1MHz because
-    											 to get the MSB number
-    											 ex- 16MHz returned by
-    											 RCC_GetPCLK1Value so
-    											 divide by 1MHz gives
-    											 16, so we want this*/
+    tempreg |= RCC_GetPCLK1Value() / 1000000U; /* divide by 1MHz because
+    											* to get the MSB number
+    											* ex- 16MHz returned by
+    											* RCC_GetPCLK1Value so
+    											* divide by 1MHz gives
+    											* 16, so we want this
+    											*/
 
-    pI2CHandle->pI2Cx->CR2 = (tempreg & 0x3FU); /*FREQ field is 6 bits
-     	 	 	 	 	 	 	 	 	 	 	 so we need to set
-     	 	 	 	 	 	 	 	 	 	 	 the tempreg value
-     	 	 	 	 	 	 	 	 	 	 	 into those Bit 5:0
-     	 	 	 	 	 	 	 	 	 	 	 and rest need to be
-     	 	 	 	 	 	 	 	 	 	 	 masked*/
+    pI2CHandle->pI2Cx->CR2 = (tempreg & 0x3FU); /* FREQ field is 6 bits
+     	 	 	 	 	 	 	 	 	 	 	 * so we need to set
+     	 	 	 	 	 	 	 	 	 	 	 * the tempreg value
+     	 	 	 	 	 	 	 	 	 	 	 * into those Bit 5:0
+     	 	 	 	 	 	 	 	 	 	 	 * and rest need to be
+     	 	 	 	 	 	 	 	 	 	 	 * masked
+     	 	 	 	 	 	 	 	 	 	 	 */
 
-    //c. Configure the device own address
+    //b. Configure the device own address
     tempreg = 0U;
     tempreg |= pI2CHandle->I2C_Config.I2C_DeviceAddress << I2C_OAR1_ADD_BIT_1_7;
     tempreg |= (1U << 14U); /*As per Reference Manual, we Should
     						  always be kept at 1 by software.*/
     pI2CHandle->pI2Cx->OAR1 = tempreg;
 
-    //d. CCR calculation for SCL speed
+    //c. CCR calculation for SCL speed
     uint16_t ccr_value = 0U;
     tempreg = 0U;
 
@@ -279,7 +442,8 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
     		 * 		   Tscl = (CCR * TPCLK1) + (2 * CCR * TPCLK1)
     		 * 		   Tscl = 3 * CCR * TPCLK1
     		 *
-    		 * 		   CCR = Tscl / (3 * TPCLK1) */
+    		 * 		   CCR = Tscl / (3 * TPCLK1)
+    		 */
     		ccr_value = (RCC_GetPCLK1Value() / (3U * pI2CHandle->I2C_Config.I2C_SCLSpeed));
     	}
     	else
@@ -288,14 +452,15 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
     		 * 		   Tscl = (9 * CCR * TPCLK1) + (16 * CCR * TPCLK1)
     		 * 		   Tscl = 25 * CCR * TPCLK1
     		 *
-    		 * 		   CCR = Tscl / (25 * TPCLK1) */
+    		 * 		   CCR = Tscl / (25 * TPCLK1)
+    		 */
     		ccr_value = (RCC_GetPCLK1Value() / (25U * pI2CHandle->I2C_Config.I2C_SCLSpeed));
     	}
     }
 	tempreg |= (ccr_value & 0xFFFU); //CCR[11:0]
 	pI2CHandle->pI2Cx->CCR = tempreg;
 
-    //e.Trise calculation
+    //d.Trise calculation
 	tempreg = 0U;
     if(pI2CHandle->I2C_Config.I2C_SCLSpeed <= I2C_SCL_SPEED_SM)
     {
@@ -323,43 +488,57 @@ void I2C_Init(I2C_Handle_t *pI2CHandle)
  * @fn                - I2C_DeInit
  *
  * @brief             - Reset the selected I2C peripheral registers
- *                      to their default reset values.
+ *                      to their hardware reset values.
  *
  * @param[in]         - pI2Cx : Base address of the I2C peripheral
+ *                              (I2C1, I2C2 or I2C3)
  *
  * @return            - none
  *
  * @Note              -
- *                      1. This function forces the I2C peripheral
- *                         into hardware reset state.
+ *                      1. This function forces the selected I2C
+ *                         peripheral into reset state using the
+ *                         RCC peripheral reset mechanism.
  *
- *                      2. All I2C registers are restored to their
- *                         default reset values defined by hardware.
+ *                      2. All I2C control, configuration and status
+ *                         registers are restored to their default
+ *                         reset values defined by hardware.
  *
- *                      3. This operation is generally performed using
- *                         RCC peripheral reset control registers.
+ *                      3. Any ongoing I2C communication is aborted
+ *                         immediately when the peripheral is reset.
  *
  *                      4. After de-initialization:
- *                           - I2C configuration is lost
- *                           - Communication stops
- *                           - Control/status registers return to
- *                             reset state
  *
- *                      5. I2C must be initialized again using
- *                         I2C_Init() before reuse.
+ *                           - Peripheral configuration is lost
+ *                           - Communication is stopped
+ *                           - Control registers are reset
+ *                           - Status flags return to reset state
  *
- *                      6. This function is useful when:
- *                           - Re-configuring I2C peripheral
- *                           - Recovering from communication faults
- *                           - Restarting peripheral operation
- *                           - Returning peripheral to clean state
+ *                      5. The peripheral must be initialized again
+ *                         using I2C_Init() before it can be used for
+ *                         communication.
  *
- *                      7. De-initialization should NOT be performed
- *                         during an active I2C transaction.
+ *                      6. Typical use cases:
  *
- *                      8. Peripheral clock may still remain enabled
- *                         after de-initialization depending on RCC
- *                         reset implementation.
+ *                           - Re-configuring the peripheral
+ *                           - Recovering from bus errors
+ *                           - Recovering from software faults
+ *                           - Returning the peripheral to a known
+ *                             clean state
+ *
+ *                      7. This function should not be called during
+ *                         an active I2C transaction because data loss
+ *                         may occur.
+ *
+ *                      8. GPIO configuration and NVIC
+ *  					   configuration are not modified by
+ *  					   this function.
+ *
+ *                      9. Supported peripherals:
+ *
+ *                           - I2C1
+ *                           - I2C2
+ *                           - I2C3
  *
  */
 void I2C_DeInit(I2C_RegDef_t *pI2Cx)
@@ -380,17 +559,54 @@ void I2C_DeInit(I2C_RegDef_t *pI2Cx)
 
 
 
-/********************************************************************
- * @fn				  - AckControl
+/*********************************************************************
+ * @fn                - I2C_AckControl
  *
- * @brief			  - Enable or Disable the ACK bit.
+ * @brief             - Enable or disable ACK generation by the I2C
+ *                      peripheral.
  *
- * @param[in]         - pI2Cx   : Base address of I2C peripheral
- * @param[in]         - EnOrDi  : ENABLE or DISABLE macros
+ * @param[in]         - pI2Cx   : Base address of the I2C peripheral
  *
- * @return			  - none
+ * @param[in]         - EnOrDi  : I2C_ACK_ENABLE
+ *                                I2C_ACK_DISABLE
  *
- * @Note			  - none
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. Controls the ACK bit in the CR1 register.
+ *
+ *                      2. When ACK is enabled, the peripheral
+ *                         automatically generates an ACK after
+ *                         receiving a data byte.
+ *
+ *                      3. When ACK is disabled, the peripheral
+ *  					   does not acknowledge the next received
+ *  					   byte, resulting in a NACK being
+ *  					   transmitted on the bus.
+ *
+ *                      4. In Master Receiver mode, ACK is typically:
+ *
+ *                           - Enabled while receiving multiple bytes
+ *                           - Disabled before receiving the final
+ *                             byte so that a NACK is generated
+ *
+ *                      5. In Slave Receiver mode, ACK allows the
+ *                         slave to acknowledge bytes received from
+ *                         the master.
+ *
+ *                      6. ACK management is an important part of
+ *                         multi-byte I2C reception sequences.
+ *
+ *                      7. Improper ACK handling may result in:
+ *
+ *                           - Extra bytes being received
+ *                           - Premature transfer termination
+ *                           - Bus communication errors
+ *
+ *                      8. This function only modifies the ACK bit
+ *                         and does not affect any other I2C
+ *                         configuration.
+ *
  */
 void I2C_AckControl(I2C_RegDef_t *pI2Cx,
 					uint8_t EnOrDi)
@@ -407,26 +623,31 @@ void I2C_AckControl(I2C_RegDef_t *pI2Cx,
 	}
 }
 
+
+
 /*********************************************************************
  * @fn                - I2C_GetFlagStatus
  *
  * @brief             - Get the status of a specific I2C status flag.
  *
  * @param[in]         - pI2Cx     : Base address of the I2C peripheral
+ *
  * @param[in]         - FlagName  : I2C status flag to check
  *
  * @return            - FLAG_SET   : Flag is set
  *                      FLAG_RESET : Flag is reset
  *
  * @Note              -
- *                      1. This function checks the I2C Status
- *                         Register (I2C_SR) for a specific flag.
+ *                      1. This function checks the I2C_SR1 register
+ *  					   for the specified status flag.
  *
- *                      2. I2C status flags indicate the current
- *                         state of I2C communication hardware.
+ *                      2. I2C status flags provide information about
+ *                         the current state of the peripheral and
+ *                         communication progress.
  *
  *                      3. This API is commonly used in polling-based
- *                         I2C communication.
+ *                         I2C communication to wait for specific
+ *                         hardware events.
  *
  *                      4. Example:
  *
@@ -437,8 +658,28 @@ void I2C_AckControl(I2C_RegDef_t *pI2Cx,
  *                         Waits until START condition generation is
  *                         completed.
  *
- *                     10. Status flags are hardware controlled and
- *                         updated automatically by I2C peripheral.
+ *                      5. Typical flags checked using this API:
+ *
+ *                           - SB      (Start Bit)
+ *                           - ADDR    (Address Sent/Matched)
+ *                           - BTF     (Byte Transfer Finished)
+ *                           - TXE     (Transmit Data Register Empty)
+ *                           - RXNE    (Receive Data Register Not Empty)
+ *                           - STOPF   (Stop Detection)
+ *
+ *                      6. Status flags are hardware controlled and
+ *                         updated automatically by the I2C peripheral.
+ *
+ *                      7. Some I2C flags are cleared by specific
+ *                         software sequences rather than by writing
+ *                         directly to the flag bit.
+ *
+ *                         Example:
+ *                           - ADDR is cleared by reading SR1
+ *                             followed by SR2.
+ *
+ *                      8. This function only reads the flag status
+ *                         and does not modify any peripheral register.
  *
  */
 uint8_t I2C_GetFlagStatus(I2C_RegDef_t *pI2Cx,
@@ -457,13 +698,46 @@ uint8_t I2C_GetFlagStatus(I2C_RegDef_t *pI2Cx,
 /*********************************************************************
  * @fn                - I2C_GenerateStartCondition
  *
- * @brief             - Generate Start Condition
+ * @brief             - Generate an I2C START condition.
  *
  * @param[in]         - pI2Cx : Base address of the I2C peripheral
  *
  * @return            - none
  *
  * @Note              -
+ *                      1. Sets the START bit in the CR1 register.
+ *
+ *                      2. When the START bit is set, the I2C
+ *                         peripheral generates a START condition
+ *                         on the bus.
+ *
+ *                      3. After the START condition is generated,
+ *                         the SB (Start Bit) flag in SR1 becomes set.
+ *
+ *                      4. Software must wait for the SB flag before
+ *                         proceeding to the address phase.
+ *
+ *                      5. After START generation, software should
+ *  	   	   	   	   	   clear the SB flag by performing the
+ *  	   	   	   	   	   address phase.
+ *
+ *  	   	   	   	   	   Until the address phase begins, the I2C
+ *  	   	   	   	   	   peripheral may hold the communication
+ *  	   	   	   	   	   sequence and prevent further bus progress.
+ *
+ *                      6. The START bit is cleared automatically by
+ *                         hardware after the START condition has been
+ *                         generated.
+ *
+ *                      7. Whether the generated START becomes an
+ *                         Initial START or a Repeated START depends
+ *                         on the current bus state.
+ *
+ *                      8. This helper function only requests START
+ *  	   	   	   	   	   generation by setting the START bit.
+ *
+ *  	   	   	   	   	   Actual START timing is handled by the
+ *  	   	   	   	   	   I2C hardware.
  *
  */
 static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx)
@@ -474,15 +748,75 @@ static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx)
 
 
 /*********************************************************************
- * @fn                - I2C_GenerateEndCondition
+ * @fn                - I2C_GenerateStopCondition
  *
- * @brief             - Generate End Condition
+ * @brief             - Generate a STOP condition on the I2C bus.
  *
  * @param[in]         - pI2Cx : Base address of the I2C peripheral
  *
  * @return            - none
  *
  * @Note              -
+ *                      1. This function sets the STOP bit in the
+ *                         I2C_CR1 register.
+ *
+ *                      2. When the STOP bit is set, the I2C
+ *                         peripheral generates a STOP condition
+ *                         on the bus after the current transfer
+ *                         is completed.
+ *
+ *                      3. A STOP condition indicates the end of the
+ *                         current I2C transaction.
+ *
+ *                      4. After a STOP condition is generated:
+ *
+ *                           - The bus is released.
+ *                           - SDA transitions from LOW to HIGH
+ *                             while SCL remains HIGH.
+ *                           - Other masters may acquire the bus
+ *                             in multi-master systems.
+ *
+ *                      5. In Master Transmitter mode, STOP is
+ *                         typically generated after:
+ *
+ *                           - TXE = 1
+ *                           - BTF = 1
+ *
+ *                         indicating that all data bytes have been
+ *                         completely transmitted.
+ *
+ *                      6. In Master Receiver mode, STOP is usually
+ *                         generated before reception of the final
+ *                         byte according to the STM32 I2C receive
+ *                         procedure.
+ *
+ *                      7. If a STOP condition is NOT generated,
+ *                         the master retains ownership of the bus.
+ *
+ *                      8. Retaining control of the bus allows the
+ *                         application to generate another START
+ *                         condition without releasing the bus.
+ *
+ *                      9. A START condition generated without a
+ *                         preceding STOP condition results in a
+ *                         Repeated START (Sr) condition.
+ *
+ *                     10. Repeated START is commonly used when:
+ *
+ *                           - Writing a register address and then
+ *                             reading data from the same slave.
+ *
+ *                           - Performing back-to-back transactions
+ *                             without releasing the bus.
+ *
+ *                     11. This function only requests STOP
+ *                         generation. Actual bus timing is handled
+ *                         automatically by the I2C hardware.
+ *
+ *                     12. If STOP is not generated after a transfer,
+ *                         software may generate another START
+ *                         condition which results in a Repeated
+ *                         START sequence on the bus.
  *
  */
 void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx)
@@ -495,28 +829,73 @@ void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx)
 /*********************************************************************
  * @fn                - I2C_ExecuteAddressPhase
  *
- * @brief             - Set the Slave address and r/nw bit into the
- * 						Address Phase.
+ * @brief             - Send the slave address and transfer direction
+ *                      (Read/Write) during the I2C address phase.
  *
- * @param[in]         - pI2Cx     : Base address of the I2C peripheral
- * @param[in]         - SlaveAddr  : 7 bit Slave Address
- * @param[in]         - TransferDir  : Read or Write
+ * @param[in]         - pI2Cx       : Base address of the I2C peripheral
+ *
+ * @param[in]         - SlaveAddr   : 7-bit slave address
+ *
+ * @param[in]         - TransferDir : Transfer direction
+ *                                    I2C_DIR_WRITE
+ *                                    I2C_DIR_READ
  *
  * @return            - none
  *
- * @Note              - set the 7 bit slave address into the address
- * 						phase, but as the data by default goes to the
- * 						LSB bit, but for us the 8 Bit Address Phase
- * 						consist of 7 bits Slave address and 1 bit r/nw
- * 						so, we need to shift those 7 bits into the MSB
- * 						then make the LSB bit 1 or 0 to indicate the
- * 						Direction.
+ * @Note              -
+ *                      1. In 7-bit addressing mode, the address
+ *                         phase transmitted on the bus consists of:
  *
- * 						use TransferDir as:
- * 						I2C_DIR_READ
- * 						I2C_DIR_WRITE
+ *                              [A6:A0][R/W]
  *
- * 						SlaveAddr = SlaveAddr + R/nW
+ *                         where:
+ *                              A6:A0 = Slave Address
+ *                              R/W   = Transfer Direction
+ *
+ *                      2. The slave address occupies bits [7:1]
+ *                         of the address frame.
+ *
+ *                      3. The least significant bit (LSB) is the
+ *                         Read/Write bit:
+ *
+ *                              0 -> Write Operation
+ *                              1 -> Read Operation
+ *
+ *                      4. This function prepares the complete
+ *                         address frame by:
+ *
+ *                              - Left shifting the 7-bit slave
+ *                                address by one position.
+ *
+ *                              - Inserting the transfer direction
+ *                                into bit position [0].
+ *
+ *                      5. The completed address frame is written
+ *                         into the I2C Data Register (DR) for
+ *                         transmission on the bus.
+ *
+ *                      6. After the address frame is transmitted:
+ *
+ *                           - Master Mode:
+ *                               ADDR flag is set by hardware after
+ *                               the addressed slave acknowledges
+ *                               the address phase.
+ *
+ *                           - Slave Mode:
+ *                               ADDR flag is set when the received
+ *                               address matches one of the slave's
+ *                               configured own addresses.
+ *
+ *                      7. Software must clear the ADDR flag using
+ *                         the required software sequence before
+ *                         proceeding with data transfer.
+ *
+ *                      8. This helper function is intended for
+ *                         7-bit addressing mode only.
+ *
+ *                      9. This function is typically called after
+ *                         successful START condition generation and
+ *                         SB flag detection.
  *
  */
 static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx,
@@ -534,15 +913,46 @@ static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx,
 /*********************************************************************
  * @fn                - I2C_ClearADDRFlag
  *
- * @brief             - Clear ADDR flag
+ * @brief             - Clear the ADDR flag according to the STM32
+ *                      I2C hardware clearing sequence.
  *
  * @param[in]         - pI2CHandle : Pointer to I2C handle structure
- *                                   containing I2C peripheral base
- *                                   address and configuration data.
+ *                                   containing peripheral instance
+ *                                   and transfer state information.
  *
  * @return            - none
  *
  * @Note              -
+ *                      1. The ADDR flag is cleared by a specific
+ *                         software sequence:
+ *
+ *                              Read SR1
+ *                              followed by
+ *                              Read SR2
+ *
+ *                      2. Until ADDR is cleared, the peripheral
+ *                         stretches SCL LOW and communication
+ *                         cannot continue.
+ *
+ *                      3. This function automatically performs the
+ *                         required flag clearing sequence.
+ *
+ *                      4. During Master Reception of a single byte,
+ *                         ACK must be cleared before ADDR is cleared.
+ *
+ *                      5. For this reason, when:
+ *
+ *                              TxRxState = I2C_BUSY_IN_RX
+ *                              RxSize    = 1
+ *
+ *                         the function first disables ACK and then
+ *                         performs the ADDR clearing sequence.
+ *
+ *                      6. For all other cases, the function simply
+ *                         clears ADDR using the SR1/SR2 read
+ *                         sequence.
+ *
+ *                      7. Applicable in both Master and Slave modes.
  *
  */
 static void I2C_ClearADDRFlag(I2C_Handle_t *pI2CHandle)
@@ -583,18 +993,60 @@ static void I2C_ClearADDRFlag(I2C_Handle_t *pI2CHandle)
 
 
 /*********************************************************************
- * @fn      		  - I2C_PeripheralControl
+ * @fn                - I2C_PeripheralControl
  *
- * @brief             -	Enable or Disable the I2C peripheral
- *                      using PE bit in CR1 register.
+ * @brief             - Enable or disable the I2C peripheral using
+ *                      the PE (Peripheral Enable) bit.
  *
- * @param[in]         - pI2Cx   : Base address of I2C peripheral
- * @param[in]         - EnOrDi  : ENABLE or DISABLE macros
+ * @param[in]         - pI2Cx   : Pointer to the target I2C peripheral
+ *                                instance.
+ *
+ * @param[in]         - EnOrDi  : ENABLE
+ *                                DISABLE
  *
  * @return            - none
  *
  * @Note              -
-
+ *                      1. Controls the PE (Peripheral Enable) bit
+ *                         in the CR1 register.
+ *
+ *                      2. When enabled, the I2C peripheral becomes
+ *                         operational and can participate in bus
+ *                         communication.
+ *
+ *                      3. When disabled, the I2C peripheral stops
+ *                         all communication activity and ignores
+ *                         most protocol-related operations.
+ *
+ *                      4. Peripheral configuration registers such as
+ *                         CR2, CCR and TRISE should be configured
+ *                         before enabling the peripheral.
+ *
+ *                      5. Timing-related configuration must not be
+ *                         modified while the peripheral is actively
+ *                         communicating on the bus.
+ *
+ *                      6. The ACK bit becomes effective only when
+ *                         the peripheral is enabled (PE = 1).
+ *
+ *                      7. Therefore, if ACK functionality is
+ *                         required, the typical sequence is:
+ *
+ *                              I2C_Init()
+ *                              I2C_PeripheralControl(ENABLE)
+ *                              I2C_AckControl(ENABLE)
+ *
+ *                      8. Disabling the peripheral does not reset
+ *                         its configuration registers.
+ *
+ *                      9. To completely restore the peripheral to
+ *                         its hardware reset state, use:
+ *
+ *                              I2C_DeInit()
+ *
+ *                     10. This function only controls the PE bit and
+ *                         does not modify any other I2C configuration.
+ *
  */
 void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx,
 						   uint8_t EnOrDi)
@@ -622,20 +1074,112 @@ void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx,
 /*********************************************************************
  * @fn                - I2C_MasterSendData
  *
- * @brief             - Master Transmit data over I2C peripheral using
- *                      blocking/polling method.
+ * @brief             - Transmit data as an I2C Master using the
+ *                      polling (blocking) method.
  *
  * @param[in]         - pI2CHandle : Pointer to I2C handle structure
- *                                   containing I2C peripheral base
- *                                   address and configuration data.
- * @param[in]		  - pTxBuffer : Pointer to transmit data buffer
- * @param[in]		  - Len : Length of transmit data buffer in bytes
- * @param[in]		  - SlaveAddr : 7 bit slave address
- * @param[in]		  - Sr : repeated start enable or disable
+ *                                   containing peripheral instance
+ *                                   and configuration information.
+ *
+ * @param[in]         - pTxBuffer  : Pointer to transmit data buffer.
+ *
+ * @param[in]         - Len        : Number of bytes to transmit.
+ *
+ * @param[in]         - SlaveAddr  : 7-bit slave address.
+ *
+ * @param[in]         - RepeatedStart :
+ *                                   I2C_SR_DISABLE
+ *                                   I2C_SR_ENABLE
  *
  * @return            - none
  *
  * @Note              -
+ *                      1. This API performs a complete I2C Master
+ *                         transmission using polling.
+ *
+ *                      2. The function blocks execution until the
+ *                         entire transmission is completed.
+ *
+ *                      3. Transmission sequence:
+ *
+ *                           START
+ *                              |
+ *                           Address + Write
+ *                              |
+ *                           Data Bytes
+ *                              |
+ *                       STOP or Repeated START
+ *
+ *                      4. The START condition is generated first and
+ *                         the function waits until the SB flag is set.
+ *
+ *                      5. The slave address is transmitted with the
+ *                         R/W bit cleared (Write operation).
+ *
+ *                      6. After address transmission, the function
+ *                         waits for the ADDR flag and clears it using
+ *                         the required software sequence.
+ *
+ *                      7. Data transmission begins only after the
+ *                         address phase has completed successfully.
+ *
+ *                      8. For each byte:
+ *
+ *                           - Wait for TXE = 1
+ *                           - Write data into DR
+ *                           - Advance buffer pointer
+ *
+ *                      9. TXE indicates that the Data Register (DR)
+ *                         is empty and ready to accept the next byte.
+ *
+ *                     10. After all bytes have been written, the
+ *                         function waits for:
+ *
+ *                              TXE = 1
+ *                              BTF = 1
+ *
+ *                         before terminating the transfer.
+ *
+ *                     11. BTF (Byte Transfer Finished) indicates:
+ *
+ *                           - DR is empty
+ *                           - Shift Register is empty
+ *                           - Last byte transmission is completed
+ *
+ *                     12. Waiting for BTF ensures that the final
+ *                         byte has actually left the peripheral
+ *                         before a STOP condition is generated.
+ *
+ *                     13. If RepeatedStart == I2C_SR_DISABLE:
+ *
+ *                           - STOP condition is generated.
+ *                           - Bus transaction terminates.
+ *
+ *                     14. If RepeatedStart == I2C_SR_ENABLE:
+ *
+ *                           - STOP condition is not generated.
+ *                           - Bus ownership is retained.
+ *                           - Another START condition may be
+ *                             generated immediately.
+ *
+ *                     15. Repeated START is commonly used in
+ *                         register-based slave devices where a
+ *                         write phase is followed by a read phase
+ *                         without releasing the bus.
+ *
+ *                     16. This API assumes:
+ *
+ *                           - Peripheral clock is enabled.
+ *                           - I2C peripheral is initialized.
+ *                           - I2C peripheral is enabled.
+ *                           - SDA/SCL GPIO pins are configured.
+ *
+ *                     17. This function is intended for Master mode
+ *                         operation only.
+ *
+ *                     18. Since this is a polling API, CPU execution
+ *                         remains blocked until the transfer is
+ *                         completed.
  *
  */
 void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
@@ -707,20 +1251,117 @@ void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,
 /*********************************************************************
  * @fn                - I2C_MasterSendDataIT
  *
- * @brief             - Master Transmit data over I2C peripheral using
- *                      interrupt/non-blocking method.
+ * @brief             - Transmit data as an I2C Master using the
+ *                      interrupt-driven (non-blocking) method.
  *
  * @param[in]         - pI2CHandle : Pointer to I2C handle structure
- *                                   containing I2C peripheral base
- *                                   address and configuration data.
- * @param[in]		  - pTxBuffer : Pointer to transmit data buffer
- * @param[in]		  - Len : Length of transmit data buffer in bytes
- * @param[in]		  - SlaveAddr : 7 bit slave address
- * @param[in]		  - Sr : repeated start enable or disable
+ *                                   containing peripheral instance
+ *                                   and runtime transfer state.
  *
- * @return            - none
+ * @param[in]         - pTxBuffer  : Pointer to transmit data buffer.
+ *
+ * @param[in]         - Len        : Number of bytes to transmit.
+ *
+ * @param[in]         - SlaveAddr  : 7-bit slave address.
+ *
+ * @param[in]         - RepeatedStart :
+ *                                   I2C_SR_DISABLE
+ *                                   I2C_SR_ENABLE
+ *
+ * @return            - Current I2C communication state:
+ *
+ *                        I2C_READY
+ *                        I2C_BUSY_IN_TX
+ *                        I2C_BUSY_IN_RX
  *
  * @Note              -
+ *                      1. This API initiates an I2C Master
+ *                         transmission using interrupts.
+ *
+ *                      2. Unlike I2C_MasterSendData(), this function
+ *                         does not wait for the transfer to complete.
+ *
+ *                      3. The function returns immediately after
+ *                         setting up the transfer parameters and
+ *                         enabling the required interrupts.
+ *
+ *                      4. Before starting a new transmission, the
+ *                         driver checks whether the peripheral is
+ *                         already busy with:
+ *
+ *                           - Transmission
+ *                           - Reception
+ *
+ *                      5. If the peripheral is busy, no new transfer
+ *                         is started and the current state is
+ *                         returned to the caller.
+ *
+ *                      6. When the peripheral is available, the
+ *                         following transfer information is stored
+ *                         inside the handle:
+ *
+ *                           - Transmit buffer address
+ *                           - Transfer length
+ *                           - Slave address
+ *                           - Repeated START option
+ *                           - Current transfer state
+ *
+ *                      7. After the transfer context is stored,
+ *                         a START condition is generated to begin
+ *                         the I2C transaction.
+ *
+ *                      8. Actual address transmission and data
+ *                         transfer are performed later by the
+ *                         interrupt service routine.
+ *
+ *                      9. The following interrupt sources are
+ *                         enabled:
+ *
+ *                           ITBUFEN
+ *                               Buffer interrupts
+ *                               (TXE, RXNE)
+ *
+ *                           ITEVTEN
+ *                               Event interrupts
+ *                               (SB, ADDR, BTF, STOPF ...)
+ *
+ *                           ITERREN
+ *                               Error interrupts
+ *                               (BERR, ARLO, AF, OVR ...)
+ *
+ *                     10. Once enabled, the interrupt handler
+ *                         becomes responsible for progressing
+ *                         the transfer state machine.
+ *
+ *                     11. The transmission sequence executed by
+ *                         the ISR is typically:
+ *
+ *                              START
+ *                                  |
+ *                              Address + Write
+ *                                  |
+ *                              Data Bytes
+ *                                  |
+ *                          STOP / Repeated START
+ *
+ *                     12. Transfer completion is normally reported
+ *                         through the application callback mechanism.
+ *
+ *                     13. Since this is a non-blocking API, the CPU
+ *                         is free to execute other tasks while the
+ *                         transfer is in progress.
+ *
+ *                     14. The application must not modify or free
+ *                         the transmit buffer until the transfer
+ *                         completion callback is received.
+ *
+ *                     15. This API assumes:
+ *
+ *                           - Peripheral clock is enabled
+ *                           - I2C peripheral is initialized
+ *                           - I2C peripheral is enabled
+ *                           - NVIC configuration is complete
+ *                           - I2C IRQ handler is implemented
  *
  */
 uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle,
@@ -761,20 +1402,129 @@ uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle,
 /*********************************************************************
  * @fn                - I2C_MasterReceiveData
  *
- * @brief             - Master Receive data over I2C peripheral using
+ * @brief             - Receive data as an I2C Master using the
  *                      blocking/polling method.
  *
  * @param[in]         - pI2CHandle : Pointer to I2C handle structure
- *                                   containing I2C peripheral base
- *                                   address and configuration data.
- * @param[in]		  - pRxBuffer : Pointer to receive data buffer
- * @param[in]		  - Len : Length of receive data buffer in bytes
- * @param[in]		  - SlaveAddr : 7 bit slave address
- * @param[in]		  - Sr : repeated start enable or disable
+ *                                   containing peripheral instance
+ *                                   and configuration information.
+ *
+ * @param[in]         - pRxBuffer  : Pointer to receive buffer.
+ *
+ * @param[in]         - Len        : Number of bytes to receive.
+ *
+ * @param[in]         - SlaveAddr  : 7-bit slave address.
+ *
+ * @param[in]         - RepeatedStart :
+ *                                   I2C_SR_DISABLE
+ *                                   I2C_SR_ENABLE
  *
  * @return            - none
  *
  * @Note              -
+ *                      1. This API performs I2C reception in
+ *                         Master Receiver mode using polling.
+ *
+ *                      2. The function is blocking in nature.
+ *                         Execution remains inside the function
+ *                         until all requested bytes have been
+ *                         received.
+ *
+ *                      3. Reception sequence:
+ *
+ *                              START
+ *                                  |
+ *                              Address + Read
+ *                                  |
+ *                             Receive Bytes
+ *                                  |
+ *                          STOP / Repeated START
+ *
+ *                      4. After generating the START condition,
+ *                         software waits for the SB flag before
+ *                         transmitting the slave address.
+ *
+ *                      5. The slave address is transmitted with
+ *                         the R/W bit set to READ.
+ *
+ *                      6. After address acknowledgement, the ADDR
+ *                         flag must be cleared according to the
+ *                         required software sequence before data
+ *                         reception can continue.
+ *
+ *                      7. Reception of a single byte requires a
+ *                         special procedure defined by the STM32
+ *                         reference manual.
+ *
+ *                         For Len == 1:
+ *
+ *                           - Disable ACK
+ *                           - Clear ADDR
+ *                           - Wait for RXNE
+ *                           - Generate STOP
+ *                             (if Repeated START disabled)
+ *                           - Read received byte
+ *
+ *                      8. ACK must be disabled before clearing
+ *                         ADDR in a single-byte reception so that
+ *                         the peripheral generates a NACK after
+ *                         receiving the byte.
+ *
+ *                      9. For multi-byte reception (Len > 1):
+ *
+ *                           - ACK remains enabled initially
+ *                           - ADDR is cleared
+ *                           - Bytes are received one by one
+ *
+ *                     10. When only two bytes remain:
+ *
+ *                           - ACK is disabled
+ *                           - STOP is generated
+ *                             (if Repeated START disabled)
+ *
+ *                         This allows the peripheral to generate
+ *                         a NACK for the final byte and terminate
+ *                         the transfer correctly.
+ *
+ *                     11. RXNE (Receive Buffer Not Empty) is used
+ *                         to indicate that a new byte has arrived
+ *                         and is available in the data register.
+ *
+ *                     12. Reading the DR register clears RXNE and
+ *                         allows reception of the next byte.
+ *
+ *                     13. If RepeatedStart is disabled:
+ *
+ *                           - STOP condition is generated at the
+ *                             end of reception.
+ *
+ *                     14. If RepeatedStart is enabled:
+ *
+ *                           - STOP condition is not generated.
+ *                           - Bus ownership is retained.
+ *                           - A subsequent START condition may be
+ *                             generated by software.
+ *
+ *                     15. Repeated START is commonly used for:
+ *
+ *                           - Register read operations
+ *                           - Combined write/read transactions
+ *                           - Multi-part I2C transfers
+ *
+ *                     16. At the end of reception, ACK is restored
+ *                         to the user-configured value stored in
+ *                         the I2C configuration structure.
+ *
+ *                     17. Failure to restore ACK may cause future
+ *                         receive operations to behave incorrectly.
+ *
+ *                     18. This API assumes:
+ *
+ *                           - Peripheral clock is enabled
+ *                           - I2C peripheral is initialized
+ *                           - I2C peripheral is enabled
+ *                           - SDA/SCL pins are properly configured
+ *                           - External pull-up resistors are present
  *
  */
 void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
@@ -870,20 +1620,145 @@ void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,
 /*********************************************************************
  * @fn                - I2C_MasterReceiveDataIT
  *
- * @brief             - Master Receive data over I2C peripheral using
- *                      interrupt/non-blocking method.
+ * @brief             - Receive data as an I2C Master using the
+ *                      interrupt-driven (non-blocking) method.
  *
  * @param[in]         - pI2CHandle : Pointer to I2C handle structure
- *                                   containing I2C peripheral base
- *                                   address and configuration data.
- * @param[in]		  - pRxBuffer : Pointer to receive data buffer
- * @param[in]		  - Len : Length of receive data buffer in bytes
- * @param[in]		  - SlaveAddr : 7 bit slave address
- * @param[in]		  - Sr : repeated start enable or disable
+ *                                   containing peripheral instance
+ *                                   and runtime transfer state.
  *
- * @return            - none
+ * @param[in]         - pRxBuffer  : Pointer to receive buffer.
+ *
+ * @param[in]         - Len        : Number of bytes to receive.
+ *
+ * @param[in]         - SlaveAddr  : 7-bit slave address.
+ *
+ * @param[in]         - RepeatedStart :
+ *                                   I2C_SR_DISABLE
+ *                                   I2C_SR_ENABLE
+ *
+ * @return            - Current I2C communication state:
+ *
+ *                        I2C_READY
+ *                        I2C_BUSY_IN_TX
+ *                        I2C_BUSY_IN_RX
  *
  * @Note              -
+ *                      1. This API initiates an I2C Master receive
+ *                         operation using interrupts.
+ *
+ *                      2. Unlike I2C_MasterReceiveData(), this
+ *                         function does not wait for reception to
+ *                         complete.
+ *
+ *                      3. The function returns immediately after
+ *                         storing the reception parameters and
+ *                         enabling the required interrupt sources.
+ *
+ *                      4. Before starting a new reception, the
+ *                         driver verifies that the peripheral is
+ *                         not currently busy with:
+ *
+ *                           - Transmission
+ *                           - Reception
+ *
+ *                      5. If the peripheral is already busy, no new
+ *                         reception is started and the current state
+ *                         is returned to the caller.
+ *
+ *                      6. When the peripheral is available, the
+ *                         following reception context is stored in
+ *                         the handle structure:
+ *
+ *                           - Receive buffer address
+ *                           - Requested receive length
+ *                           - Original receive size
+ *                           - Slave address
+ *                           - Repeated START option
+ *                           - Current transfer state
+ *
+ *                      7. RxLen is used to track the remaining
+ *                         number of bytes during reception.
+ *
+ *                      8. RxSize stores the original reception
+ *                         length and is preserved for special
+ *                         receive sequences handled inside the ISR.
+ *
+ *                      9. RxSize is particularly useful when
+ *                         implementing:
+ *
+ *                           - Single-byte reception
+ *                           - Two-byte reception
+ *                           - ACK/NACK management
+ *                           - ADDR flag clearing sequence
+ *
+ *                     10. After the transfer context is stored,
+ *                         a START condition is generated to begin
+ *                         the I2C transaction.
+ *
+ *                     11. Actual address transmission and data
+ *                         reception are performed later by the
+ *                         interrupt service routine.
+ *
+ *                     12. The following interrupt sources are
+ *                         enabled:
+ *
+ *                           ITBUFEN
+ *                               Buffer interrupts
+ *                               (TXE, RXNE)
+ *
+ *                           ITEVTEN
+ *                               Event interrupts
+ *                               (SB, ADDR, BTF, STOPF ...)
+ *
+ *                           ITERREN
+ *                               Error interrupts
+ *                               (BERR, ARLO, AF, OVR ...)
+ *
+ *                     13. Once enabled, the interrupt handler
+ *                         becomes responsible for progressing
+ *                         the receive state machine.
+ *
+ *                     14. The reception sequence executed by the
+ *                         ISR is typically:
+ *
+ *                              START
+ *                                  |
+ *                              Address + Read
+ *                                  |
+ *                             Receive Bytes
+ *                                  |
+ *                          STOP / Repeated START
+ *
+ *                     15. ACK/NACK generation for the final bytes
+ *                         is handled by the interrupt-driven receive
+ *                         state machine according to the remaining
+ *                         receive length.
+ *
+ *                     16. If RepeatedStart is enabled, the ISR will
+ *                         complete reception without generating a
+ *                         STOP condition, allowing a subsequent
+ *                         START condition to be generated.
+ *
+ *                     17. Transfer completion is normally reported
+ *                         through the application callback
+ *                         mechanism.
+ *
+ *                     18. Since this is a non-blocking API, the CPU
+ *                         is free to perform other tasks while the
+ *                         reception is in progress.
+ *
+ *                     19. The application must not modify or free
+ *                         the receive buffer until the reception
+ *                         completion callback is received.
+ *
+ *                     20. This API assumes:
+ *
+ *                           - Peripheral clock is enabled
+ *                           - I2C peripheral is initialized
+ *                           - I2C peripheral is enabled
+ *                           - NVIC configuration is complete
+ *                           - I2C IRQ handler is implemented
  *
  */
 uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,
@@ -918,6 +1793,107 @@ uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,
 	}
 
 	return busystate;
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_SlaveSendData
+ *
+ * @brief             - Load a data byte into the I2C data register
+ *                      for transmission in Slave Transmitter mode.
+ *
+ * @param[in]         - pI2Cx : Base address of the I2C peripheral.
+ *
+ * @param[in]         - data  : Data byte to be transmitted.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. This function writes a single byte into
+ *                         the I2C data register (DR).
+ *
+ *                      2. The loaded byte is transmitted when the
+ *                         master performs a read operation from the
+ *                         slave device.
+ *
+ *                      3. This API is typically called from the
+ *                         application layer when
+ *  					   I2C_EV_DATA_REQ callback is received:
+ *
+ *                           - TXE event
+ *                           - Slave transmit request callback
+ *
+ *                      4. The application is responsible for
+ *                         providing the next byte whenever the
+ *                         transmit data register becomes empty.
+ *
+ *                      5. Writing to DR clears the TXE condition
+ *                         and prepares the next byte for transfer.
+ *
+ *                      6. This API transmits only one byte.
+ *                         Multi-byte slave transmission must be
+ *                         managed by the application or ISR logic.
+ *
+ *                      7. The peripheral must already be configured
+ *                         and operating in slave mode before this
+ *                         function is called.
+ *
+ */
+void I2C_SlaveSendData(I2C_RegDef_t *pI2Cx,
+					   uint8_t data)
+{
+	//load data to DR
+	pI2Cx->DR = data;
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_SlaveReceiveData
+ *
+ * @brief             - Read a received data byte from the I2C data
+ *                      register in Slave Receiver mode.
+ *
+ * @param[in]         - pI2Cx : Base address of the I2C peripheral.
+ *
+ * @return            - Received data byte.
+ *
+ * @Note              -
+ *                      1. This function reads a single byte from
+ *                         the I2C data register (DR).
+ *
+ *                      2. The received byte must be read after the
+ *                         RXNE flag becomes set.
+ *
+ *                      3. This API is typically called from the
+ *                         application layer when
+ *  					   I2C_EV_DATA_RCV callback is received:
+ *
+ *                           - RXNE event
+ *                           - Slave receive callback
+ *
+ *                      4. Reading DR clears the RXNE condition and
+ *                         allows the peripheral to receive the next
+ *                         byte.
+ *
+ *                      5. This API receives only one byte.
+ *                         Multi-byte slave reception must be managed
+ *                         by the application or ISR logic.
+ *
+ *                      6. The peripheral must already be configured
+ *                         and operating in slave mode before this
+ *                         function is called.
+ *
+ *                      7. Failure to read DR after RXNE becomes set
+ *                         may prevent subsequent data reception and
+ *                         can eventually lead to overrun conditions.
+ *
+ */
+uint8_t I2C_SlaveReceiveData(I2C_RegDef_t *pI2Cx)
+{
+	//return data from the DR
+	return (uint8_t)pI2Cx->DR;
 }
 
 
@@ -1423,20 +2399,168 @@ void I2C_IRQPriorityConfig(uint8_t IRQNumber,
 
 
 /*********************************************************************
-* @fn                - I2C_EV_IRQHandling
-*
-* @brief             - Handles all I2C interrupt events generated by
- * 					   the I2C peripheral.
-*
-* @param[in]         - pI2CHandle : Pointer to I2C handle structure
-*                                   containing I2C peripheral base
-*                                   address and configuration data.
-*
-* @return            - none
-*
-* @Note              -
-*
-*/
+ * @fn                - I2C_SlaveEnableDisableCallbackEvents
+ *
+ * @brief             - Enable or disable I2C event, buffer and
+ *                      error interrupts.
+ *
+ * @param[in]         - pI2Cx   : Base address of the I2C peripheral.
+ *
+ * @param[in]         - EnOrDi  : ENABLE
+ *                                DISABLE
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. This function enables or disables the
+ *                         interrupt sources required for callback-
+ *                         based I2C slave communication.
+ *
+ *                      2. When enabled, the I2C peripheral can
+ *                         generate interrupt requests for:
+ *
+ *                           - Event conditions
+ *                           - Buffer conditions
+ *                           - Error conditions
+ *
+ *                      3. The following interrupt control bits in
+ *                         CR2 are configured:
+ *
+ *                           ITBUFEN
+ *                               Buffer Interrupt Enable
+ *
+ *                           ITEVTEN
+ *                               Event Interrupt Enable
+ *
+ *                           ITERREN
+ *                               Error Interrupt Enable
+ *
+ *                      4. ITBUFEN enables buffer-related events:
+ *
+ *                           - TXE (Transmit Buffer Empty)
+ *                           - RXNE (Receive Buffer Not Empty)
+ *
+ *                      5. ITEVTEN enables event-related interrupts:
+ *
+ *                           - SB (Start Bit)
+ *                           - ADDR (Address Matched)
+ *                           - BTF (Byte Transfer Finished)
+ *                           - STOPF (Stop Detection)
+ *                           - Other communication events
+ *
+ *                      6. ITERREN enables error-related interrupts:
+ *
+ *                           - BERR (Bus Error)
+ *                           - ARLO (Arbitration Lost)
+ *                           - AF (Acknowledge Failure)
+ *                           - OVR (Overrun/Underrun)
+ *                           - TIMEOUT (if supported)
+ *
+ *                      7. Disabling these interrupt sources does not
+ *                         disable the I2C peripheral itself.
+ *
+ *                      8. When disabled, interrupt requests are no
+ *                         longer generated, but software may still
+ *                         access the peripheral using polling-based
+ *                         APIs.
+ *
+ *                      9. This function is typically used when the
+ *                         peripheral operates in slave mode and the
+ *                         application relies on callback functions
+ *                         for data transmission and reception.
+ *
+ *                     10. NVIC interrupt configuration must also be
+ *                         completed separately for interrupt-driven
+ *                         operation.
+ *
+ */
+void I2C_SlaveEnableDisableCallbackEvents(I2C_RegDef_t *pI2Cx,
+ 		                                  uint8_t EnorDi)
+{
+	if(EnorDi == ENABLE)
+	{
+		//Enable ITBUFEN Control Bit
+		pI2Cx->CR2 |= (1U << I2C_CR2_ITBUFEN);
+
+		//Enable ITEVTEN Control Bit
+		pI2Cx->CR2 |= (1U << I2C_CR2_ITEVTEN);
+
+		//Enable ITERREN Control Bit
+		pI2Cx->CR2 |= (1U << I2C_CR2_ITERREN);
+	}
+	else
+	{
+		//Disable ITBUFEN Control Bit
+		pI2Cx->CR2 &= ~(1U << I2C_CR2_ITBUFEN);
+
+		//Disable ITEVTEN Control Bit
+		pI2Cx->CR2 &= ~(1U << I2C_CR2_ITEVTEN);
+
+		//Disable ITERREN Control Bit
+		pI2Cx->CR2 &= ~(1U << I2C_CR2_ITERREN);
+	}
+}
+
+
+
+/*********************************************************************
+ * @fn                - I2C_EV_IRQHandling
+ *
+ * @brief             - Handles I2C event interrupts generated by
+ *                      the peripheral.
+ *
+ * @param[in]         - pI2CHandle : Pointer to I2C handle structure.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. This function must be called from the
+ *                         corresponding I2C Event ISR.
+ *
+ *                      2. Event interrupts are processed only when
+ *                         ITEVTEN is enabled.
+ *
+ *                      3. Buffer related events additionally require
+ *                         ITBUFEN to be enabled.
+ *
+ *                      4. Supported event flags:
+ *
+ *                           - SB
+ *                           - ADDR
+ *                           - BTF
+ *                           - STOPF
+ *                           - TXE
+ *                           - RXNE
+ *
+ *                      5. In Master mode:
+ *
+ *                           - Executes address phase after SB.
+ *                           - Clears ADDR.
+ *                           - Handles transmit operations.
+ *                           - Handles receive operations.
+ *                           - Completes transfers when BTF occurs.
+ *
+ *                      6. In Slave mode:
+ *
+ *                           - Detects address match.
+ *                           - Detects STOP condition.
+ *                           - Generates application callbacks for:
+ *
+ *                                I2C_EV_DATA_REQ
+ *                                I2C_EV_DATA_RCV
+ *                                I2C_EV_STOP
+ *
+ *                      7. Transfer completion events generate:
+ *
+ *                                I2C_EV_TX_CMPLT
+ *                                I2C_EV_RX_CMPLT
+ *
+ *                         through the application callback.
+ *
+ *                      8. This function services both Master and
+ *                         Slave interrupt-driven communication.
+ *
+ */
 void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle)
 {
 
@@ -1522,18 +2646,18 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle)
 
 
 	/* 4. Handle For interrupt generated by STOPF event
-	   Note : Stop detection flag is applicable only slave mode .
-	   For master this flag will never be set
-	   The below code block will not be executed by the master
-	   since STOPF will not set in master mode */
+	 * Note : Stop detection flag is applicable only slave mode .
+	 * For master this flag will never be set
+	 * The below code block will not be executed by the master
+	 * since STOPF will not set in master mode */
 	//STOPF will be only set by slave
 	temp3 = pI2CHandle->pI2Cx->SR1 & (1U << I2C_SR1_STOPF);
 	if(temp1 && temp3)
 	{
 		/* interrupt is generated because of STOPF event
-		   clear the STOPF,
-		   a. read SR1(already read above pI2Cx->SR1)
-		   b. write to CR1 */
+		 * clear the STOPF,
+		 * a. read SR1(already read above pI2Cx->SR1)
+		 * b. write to CR1 */
 		pI2CHandle->pI2Cx->CR1 |= 0x0000U;/* shouldn't write
 		 	 	 	 	 	 	 	 	 	 invalid data*/
 
@@ -1552,14 +2676,29 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle)
 		 * indication that data register is empty so
 		 * software has to put a byte into the DR.
 		 */
-		//device should be in master mode [MSL = 1]
 		if(pI2CHandle->pI2Cx->SR2 & (1U << I2C_SR2_MSL))
 		{
+			//device is in master mode [MSL = 1]
 			/* Confirm that only if the application state
 			 * is busy in TX  */
 			if(pI2CHandle->TxRxState == I2C_BUSY_IN_TX)
 			{
 				I2C_MasterHandleTXEInterrupt(pI2CHandle);
+			}
+		}
+		else
+		{
+			//device is in slave mode [MSL = 0]
+			if(pI2CHandle->pI2Cx->SR2 & (1U << I2C_SR2_TRA))
+			{
+				/* slave is in transmitter,
+				 * TRA bit actually influenced by the
+				 * address phase we do there the LSB
+				 * bit as r(1) or w(0).
+				 */
+				//notify the application about the TXE
+				I2C_ApplicationEventCallback(pI2CHandle,
+				   	   	   	   	   	    	 I2C_EV_DATA_REQ);
 			}
 		}
 	}
@@ -1584,26 +2723,70 @@ void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle)
 				I2C_MasterHandleRXNEInterrupt(pI2CHandle);
 			}
 		}
+		else
+		{
+			//device is in slave mode [MSL = 0]
+			if(!(pI2CHandle->pI2Cx->SR2 & (1U << I2C_SR2_TRA)))
+			{
+				/* slave is in slave,
+				 * TRA bit actually influenced by the
+				 * address phase we do there the LSB
+				 * bit as r(1) or w(0).
+				 */
+				//notify the application about the RXNE
+				I2C_ApplicationEventCallback(pI2CHandle,
+				   	   	   	   	   	    	 I2C_EV_DATA_RCV);
+			}
+		}
 	}
 }
 
 
 
 /*********************************************************************
-* @fn                - I2C_ER_IRQHandling
-*
-* @brief             - Handles all I2C interrupt errors generated by
- * 					   the I2C peripheral.
-*
-* @param[in]         - pI2CHandle : Pointer to I2C handle structure
-*                                   containing I2C peripheral base
-*                                   address and configuration data.
-*
-* @return            - none
-*
-* @Note              -
-*
-*/
+ * @fn                - I2C_ER_IRQHandling
+ *
+ * @brief             - Handles I2C error interrupts generated by
+ *                      the peripheral.
+ *
+ * @param[in]         - pI2CHandle : Pointer to I2C handle structure.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. This function must be called from the
+ *                         corresponding I2C Error ISR.
+ *
+ *                      2. Error interrupts are processed only when
+ *                         ITERREN is enabled.
+ *
+ *                      3. Supported error conditions:
+ *
+ *                           - Bus Error (BERR)
+ *                           - Arbitration Lost (ARLO)
+ *                           - Acknowledge Failure (AF)
+ *                           - Overrun/Underrun (OVR)
+ *                           - Timeout (TIMEOUT)
+ *
+ *                      4. When an error occurs:
+ *
+ *                           a. Error flag is detected.
+ *                           b. Error flag is cleared.
+ *                           c. Application callback is notified.
+ *
+ *                      5. Corresponding application events:
+ *
+ *                           - I2C_ER_BERR
+ *                           - I2C_ER_ARLO
+ *                           - I2C_ER_AF
+ *                           - I2C_ER_OVR
+ *                           - I2C_ER_TIMEOUT
+ *
+ *                      6. This function does not automatically
+ *                         restart or recover the transaction.
+ *                         Recovery is application dependent.
+ *
+ */
 void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle)
 {
 	uint32_t temp1 = 0U, temp2 = 0U;
@@ -1688,20 +2871,37 @@ void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle)
 
 
 /*********************************************************************
-* @fn                - I2C_MasterHandleTXEInterrupt
-*
-* @brief             - Internal helper function to handle I2C TXE
-* 					   (Transmit Buffer Empty) interrupt event.
-*
-* @param[in]         - pI2CHandle : Pointer to I2C handle structure
-*                                   containing I2C peripheral base
-*                                   address and configuration data.
-*
-* @return            - none
-*
-* @Note              -
-*
-*/
+ * @fn                - I2C_MasterHandleTXEInterrupt
+ *
+ * @brief             - Internal helper used to service the TXE
+ *                      interrupt during interrupt-driven master
+ *                      transmission.
+ *
+ * @param[in]         - pI2CHandle : Pointer to I2C handle structure.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. Called by I2C_EV_IRQHandling().
+ *
+ *                      2. Executed when:
+ *
+ *                           - TXE = 1
+ *                           - Master is transmitting
+ *
+ *                      3. Loads the next data byte into DR.
+ *
+ *                      4. Updates:
+ *
+ *                           - pTxBuffer
+ *                           - TxLen
+ *
+ *                      5. Actual transfer completion is handled
+ *                         later through the BTF event.
+ *
+ *                      6. Intended for internal driver use only.
+ *
+ */
 static void I2C_MasterHandleTXEInterrupt(I2C_Handle_t *pI2CHandle)
 {
 	if(pI2CHandle->TxLen > 0U)
@@ -1721,20 +2921,51 @@ static void I2C_MasterHandleTXEInterrupt(I2C_Handle_t *pI2CHandle)
 
 
 /*********************************************************************
-* @fn                - I2C_MasterHandleRXNEInterrupt
-*
-* @brief             - Internal helper function to handle I2C RXNE
-* 					   (Receive Buffer Not Empty) interrupt event.
-*
-* @param[in]         - pI2CHandle : Pointer to I2C handle structure
-*                                   containing I2C peripheral base
-*                                   address and configuration data.
-*
-* @return            - none
-*
-* @Note              -
-*
-*/
+ * @fn                - I2C_MasterHandleRXNEInterrupt
+ *
+ * @brief             - Internal helper used to service the RXNE
+ *                      interrupt during interrupt-driven master
+ *                      reception.
+ *
+ * @param[in]         - pI2CHandle : Pointer to I2C handle structure.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. Called by I2C_EV_IRQHandling().
+ *
+ *                      2. Executed when:
+ *
+ *                           - RXNE = 1
+ *                           - Master is receiving
+ *
+ *                      3. Reads received data from DR and stores it
+ *                         into the receive buffer.
+ *
+ *                      4. Handles special STM32 reception sequences
+ *                         for:
+ *
+ *                           - Single-byte reception
+ *                           - Multi-byte reception
+ *                           - Final byte handling
+ *
+ *                      5. Generates STOP condition when required
+ *                         and repeated start is disabled.
+ *
+ *                      6. Updates:
+ *
+ *                           - pRxBuffer
+ *                           - RxLen
+ *
+ *                      7. When reception completes:
+ *
+ *                           - Closes the receive operation.
+ *                           - Restores ACK configuration.
+ *                           - Generates I2C_EV_RX_CMPLT callback.
+ *
+ *                      8. Intended for internal driver use only.
+ *
+ */
 static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle)
 {
 	if(pI2CHandle->RxSize == 1U)
@@ -1799,20 +3030,36 @@ static void I2C_MasterHandleRXNEInterrupt(I2C_Handle_t *pI2CHandle)
 
 
 /*********************************************************************
-* @fn                - I2C_CloseTransmission
-*
-* @brief             - Closes an ongoing I2C send data in Interrupt
-* 					   mode.
-*
-* @param[in]         - pI2CHandle : Pointer to I2C handle structure
-*                                   containing I2C peripheral base
-*                                   address and configuration data.
-*
-* @return            - none
-*
-* @Note              -
-*
-*/
+ * @fn                - I2C_CloseTransmission
+ *
+ * @brief             - Terminate an interrupt-driven master transmit
+ *                      operation and restore driver state.
+ *
+ * @param[in]         - pI2CHandle : Pointer to I2C handle structure.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. Disables TX/RX buffer interrupts
+ *                         (ITBUFEN).
+ *
+ *                      2. Disables event interrupts
+ *                         (ITEVTEN).
+ *
+ *                      3. Resets transmission related state
+ *                         variables.
+ *
+ *                      4. Updates driver state to:
+ *
+ *                              I2C_READY
+ *
+ *                      5. Does not generate a STOP condition.
+ *                         STOP generation must be handled before
+ *                         calling this function.
+ *
+ *                      6. Intended for internal driver use only.
+ *
+ */
 void I2C_CloseTransmission(I2C_Handle_t *pI2CHandle)
 {
 	//Implement the code to disable ITBUFEN Control Bit
@@ -1830,20 +3077,38 @@ void I2C_CloseTransmission(I2C_Handle_t *pI2CHandle)
 
 
 /*********************************************************************
-* @fn                - I2C_CloseReception
-*
-* @brief             - Closes an ongoing I2C receive data in Interrupt
-* 					   mode.
-*
-* @param[in]         - pI2CHandle : Pointer to I2C handle structure
-*                                   containing I2C peripheral base
-*                                   address and configuration data.
-*
-* @return            - none
-*
-* @Note              -
-*
-*/
+ * @fn                - I2C_CloseReception
+ *
+ * @brief             - Terminate an interrupt-driven master receive
+ *                      operation and restore driver state.
+ *
+ * @param[in]         - pI2CHandle : Pointer to I2C handle structure.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *                      1. Disables TX/RX buffer interrupts
+ *                         (ITBUFEN).
+ *
+ *                      2. Disables event interrupts
+ *                         (ITEVTEN).
+ *
+ *                      3. Resets reception related state
+ *                         variables.
+ *
+ *                      4. Updates driver state to:
+ *
+ *                              I2C_READY
+ *
+ *                      5. Restores ACK configuration according to
+ *                         the user's original driver settings.
+ *
+ *                      6. Called automatically when interrupt-driven
+ *                         reception completes.
+ *
+ *                      7. Intended for internal driver use only.
+ *
+ */
 void I2C_CloseReception(I2C_Handle_t *pI2CHandle)
 {
 	//Implement the code to disable ITBUFEN Control Bit

@@ -11,7 +11,7 @@
  *
  *      ALT function mode: AF4
  *
- *      Task:
+ *      Task: I2C Master(STM32) and I2C Slave(Arduino) communication
  *      When button on the master is pressed, master should read and display data from Arduino Slave connected.
  *      First master has to get the length of the data from the slave to read subsequent data from the slave.
  *      1. Use I2C SCL = 100KHz(Standard Mode)
