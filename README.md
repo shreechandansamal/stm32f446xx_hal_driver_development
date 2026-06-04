@@ -357,8 +357,6 @@ test
 * Multi-Byte Data Transfers
 * Event and Error Interrupt Validation
 
-```
-```
 ---
 
 ## 🛠️ Build & Run
