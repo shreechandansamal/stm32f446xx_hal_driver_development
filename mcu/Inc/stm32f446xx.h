@@ -704,6 +704,18 @@ _Static_assert(sizeof(USART_RegDef_t) == 0x1C, "USART_RegDef struct size mismatc
 
 
 
+/*
+ * Macro to reset USARTx peripherals
+ */
+#define USART1_REG_RESET()   do{ (RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST_Msk); (RCC->APB2RSTR &= ~RCC_APB2RSTR_USART1RST_Msk); }while(0)
+#define USART2_REG_RESET()   do{ (RCC->APB1RSTR |= RCC_APB1RSTR_USART2RST_Msk); (RCC->APB1RSTR &= ~RCC_APB1RSTR_USART2RST_Msk); }while(0)
+#define USART3_REG_RESET()   do{ (RCC->APB1RSTR |= RCC_APB1RSTR_USART3RST_Msk); (RCC->APB1RSTR &= ~RCC_APB1RSTR_USART3RST_Msk); }while(0)
+#define UART4_REG_RESET()    do{ (RCC->APB1RSTR |= RCC_APB1RSTR_UART4RST_Msk); (RCC->APB1RSTR &= ~RCC_APB1RSTR_UART4RST_Msk); }while(0)
+#define UART5_REG_RESET()    do{ (RCC->APB1RSTR |= RCC_APB1RSTR_UART5RST_Msk); (RCC->APB1RSTR &= ~RCC_APB1RSTR_UART5RST_Msk); }while(0)
+#define USART6_REG_RESET()   do{ (RCC->APB2RSTR |= RCC_APB2RSTR_USART6RST_Msk); (RCC->APB2RSTR &= ~RCC_APB2RSTR_USART6RST_Msk); }while(0)
+
+
+
 /*********************************************************************
  * GPIO Base Address to Code
  *********************************************************************/
