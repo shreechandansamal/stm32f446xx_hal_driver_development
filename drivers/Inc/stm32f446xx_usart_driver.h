@@ -61,10 +61,102 @@ typedef struct
 	USART_RegDef_t *pUSARTx;		/*!< Holds the base address of the
 									     USART peripheral(USART1/UART4...) */
 	USART_Config_t USART_Config;	/*!< Holds USART configuration settings */
-}I2C_Handle_t;
+}USART_Handle_t;
 
 
 
+
+
+
+
+
+
+/**************************************************************************************************************
+ *                                    APIs Supported By This Driver
+ *
+ *              For detailed information about each API,
+ *              refer to the function definitions in source file.
+ *
+ **************************************************************************************************************/
+
+
+
+
+/*********************************************************************
+ * Peripheral Clock Control APIs
+ *********************************************************************/
+void USART_PeriClockControl(USART_RegDef_t *pUSARTx,
+						    uint8_t EnorDi);
+
+
+
+
+/*********************************************************************
+ * Initialization and De-Initialization APIs
+ *********************************************************************/
+void USART_Init(USART_Handle_t *pUSARTHandle);
+
+void USART_DeInit(USART_RegDef_t *pUSARTx);
+
+
+
+
+/*********************************************************************
+ * Data Transmission and Reception APIs
+ *********************************************************************/
+void USART_SendData(USART_RegDef_t *pUSARTx,
+					uint8_t *pTxBuffer,
+					uint32_t Len);
+
+void USART_ReceiveData(USART_RegDef_t *pUSARTx,
+					   uint8_t *pRxBuffer,
+					   uint32_t Len);
+
+uint8_t USART_SendDataIT(USART_Handle_t *pUSARTHandle,
+						 uint8_t *pTxBuffer,
+						 uint32_t Len);
+
+uint8_t USART_ReceiveDataIT(USART_Handle_t *pUSARTHandle,
+							uint8_t *pRxBuffer,
+							uint32_t Len);
+
+
+
+
+/*********************************************************************
+ * IRQ Configuration and ISR Handling APIs
+ *********************************************************************/
+void USART_IRQInterruptConfig(uint8_t IRQNumber,
+							  uint8_t EnorDi);
+
+void USART_IRQPriorityConfig(uint8_t IRQNumber,
+						     uint32_t IRQPriority);
+
+void USART_IRQHandling(USART_Handle_t *pUSARTHandle);
+
+
+
+
+/*********************************************************************
+ * USART Peripheral Control APIs
+ *********************************************************************/
+void USART_PeripheralControl(USART_RegDef_t *pUSARTx,
+	    					 uint8_t EnorDi);
+
+uint8_t USART_GetFlagStatus(USART_RegDef_t *pUSARTx,
+						  	uint8_t FlagName);
+
+void USART_ClearFlag(USART_RegDef_t *pUSARTx,
+					 uint8_t FlagName);
+
+
+
+
+/*********************************************************************
+ * I2C Application Callback
+ *********************************************************************/
+void USART_ApplicationEventCallback(USART_Handle_t *pUSARTHandle,
+									uint8_t AppEvent);
 
 
 
