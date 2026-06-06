@@ -357,6 +357,22 @@ _Static_assert(sizeof(I2C_RegDef_t) == 0x28, "I2C_RegDef struct size mismatch!")
 
 
 
+/*********************************************************************
+ * Peripheral Register Definition Structure for USART
+ *********************************************************************/
+typedef struct
+{
+	__IO uint32_t SR;		   /*!< USART status register							           	 Address offset:0x00 */
+	__IO uint32_t DR;		   /*!< USART data register 							           	 Address offset:0x04 */
+	__IO uint32_t BRR;		   /*!< USART baud rate register							         Address offset:0x08 */
+	__IO uint32_t CR1;		   /*!< USART control register 1							         Address offset:0x0C */
+	__IO uint32_t CR2;		   /*!< USART control register 2					         		 Address offset:0x10 */
+	__IO uint32_t CR3;		   /*!< USART control register 3						         	 Address offset:0x14 */
+	__IO uint32_t GTPR;		   /*!< USART guard time and prescaler register						 Address offset:0x18 */
+}USART_RegDef_t;
+
+_Static_assert(sizeof(USART_RegDef_t) == 0x1C, "USART_RegDef struct size mismatch!");
+
 
 
 /*********************************************************************
@@ -386,7 +402,12 @@ _Static_assert(sizeof(I2C_RegDef_t) == 0x28, "I2C_RegDef struct size mismatch!")
 #define I2C2		((I2C_RegDef_t *)I2C2_BASEADDR)
 #define I2C3		((I2C_RegDef_t *)I2C3_BASEADDR)
 
-
+#define USART1		((USART_RegDef_t *)USART1_BASEADDR)
+#define USART2		((USART_RegDef_t *)USART2_BASEADDR)
+#define USART3		((USART_RegDef_t *)USART3_BASEADDR)
+#define UART4		((USART_RegDef_t *)UART4_BASEADDR)
+#define UART5		((USART_RegDef_t *)UART5_BASEADDR)
+#define USART6		((USART_RegDef_t *)USART6_BASEADDR)
 
 /*********************************************************************
  * RCC AHB1ENR Register Bit Definitions
