@@ -30,12 +30,17 @@
  *********************************************************************/
 typedef struct
 {
-	uint8_t USART_Mode;
-	uint32_t USART_BaudRate;
-	uint8_t USART_NoOfStopBits;
-	uint8_t USART_WordLength;
-	uint8_t USART_ParityControl;
-	uint8_t USART_HWFlowControl;
+	uint8_t USART_Mode;				/*!< Holds USART mode settings */
+	uint32_t USART_BaudRate;		/*!< Holds USART baud rate
+	 	 	 	 	 	 	 	 	 	 settings */
+	uint8_t USART_NoOfStopBits;		/*!< Holds USART number of stop
+	 	 	 	 	 	 	 	 	 	 bits settings */
+	uint8_t USART_WordLength;		/*!< Holds USART word length
+	 	 	 	 	 	 	 	 	 	 settings */
+	uint8_t USART_ParityControl;	/*!< Holds USART parity bit
+	 	 	 	 	 	 	 	 	 	 control settings */
+	uint8_t USART_HWFlowControl;	/*!< Holds USART hardware flow
+	 	 	 	 	 	 	 	 	 	 control settings */
 }USART_Config_t;
 
 
@@ -59,14 +64,80 @@ typedef struct
 typedef struct
 {
 	USART_RegDef_t *pUSARTx;		/*!< Holds the base address of the
-									     USART peripheral(USART1/UART4...) */
-	USART_Config_t USART_Config;	/*!< Holds USART configuration settings */
+									     USART peripheral (USART1/
+									     UART4...) */
+	USART_Config_t USART_Config;	/*!< Holds USART configuration
+	 	 	 	 	 	 	 	 	 	 settings */
 }USART_Handle_t;
 
 
 
+/*********************************************************************
+ * @USART_Mode
+ *********************************************************************/
+#define USART_MODE_ONLY_TX 					0U
+#define USART_MODE_ONLY_RX 					1U
+#define USART_MODE_TXRX  					2U
 
 
+
+
+/*********************************************************************
+ * @USART_Baud
+ *********************************************************************/
+#define USART_STD_BAUD_1200					1200U
+#define USART_STD_BAUD_2400					2400U
+#define USART_STD_BAUD_9600					9600U
+#define USART_STD_BAUD_19200 				19200U
+#define USART_STD_BAUD_38400 				38400U
+#define USART_STD_BAUD_57600 				57600U
+#define USART_STD_BAUD_115200 				115200U
+#define USART_STD_BAUD_230400 				230400U
+#define USART_STD_BAUD_460800 				460800U
+#define USART_STD_BAUD_921600 				921600U
+#define USART_STD_BAUD_2M 					2000000U
+#define USART_STD_BAUD_3M 					3000000U
+
+
+
+
+/*********************************************************************
+ * @USART_ParityControl
+ *********************************************************************/
+#define USART_PARITY_EN_ODD   				2U
+#define USART_PARITY_EN_EVEN     			1U
+#define USART_PARITY_DISABLE    			0U
+
+
+
+
+/*********************************************************************
+ * @USART_WordLength
+ *********************************************************************/
+#define USART_WORDLEN_8BITS  				0U
+#define USART_WORDLEN_9BITS  				1U
+
+
+
+
+/*********************************************************************
+ * @USART_NoOfStopBits
+ *********************************************************************/
+#define USART_STOPBITS_1     				0U
+#define USART_STOPBITS_0_5   				1U
+#define USART_STOPBITS_2     				2U
+#define USART_STOPBITS_1_5   				3U
+
+
+
+
+/*********************************************************************
+ * @USART_HWFlowControl
+ *********************************************************************/
+#define USART_HW_FLOW_CTRL_NONE    			0U
+#define USART_HW_FLOW_CTRL_CTS    			1U
+#define USART_HW_FLOW_CTRL_RTS    			2U
+#define USART_HW_FLOW_CTRL_CTS_RTS			3U
 
 
 
