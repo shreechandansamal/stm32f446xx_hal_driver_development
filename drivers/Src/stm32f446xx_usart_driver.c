@@ -115,6 +115,125 @@ void USART_PeriClockControl(USART_RegDef_t *pUSARTx,
 
 
 /*********************************************************************
+ * @fn                - USART_Init
+ *
+ * @brief             - Initialize the USART peripheral with the
+ *                      user-defined configuration parameters.
+ *
+ * @param[in]         - pUSARTHandle : Pointer to USART handle
+ * 									   structure containing USART
+ * 									   peripheral base address and
+ * 									   configuration data.
+ *
+ * @return            - none
+ *
+ * @Note              -
+ *
+ */
+void USART_Init(USART_Handle_t *pUSARTHandle)
+{
+
+	//temporary variable
+	uint32_t tempreg = 0U;
+
+/******************************** Configuration of CR1******************************************/
+
+	//Enable the Clock for given USARTx peripheral
+	USART_PeriClockControl(pUSARTHandle->pUSARTx,
+						   ENABLE);
+
+	//Enable USART Tx and Rx engines according to the USART_Mode configuration item
+	if (pUSARTHandle->USART_Config.USART_Mode == USART_MODE_ONLY_RX)
+	{
+		//Enable the Receiver bit field
+		tempreg|= (1U << USART_CR1_RE);
+	}
+	else if (pUSARTHandle->USART_Config.USART_Mode == USART_MODE_ONLY_TX)
+	{
+		//Enable the Transmitter bit field
+		tempreg |= (1U << USART_CR1_TE);
+
+	}
+	else if (pUSARTHandle->USART_Config.USART_Mode == USART_MODE_TXRX)
+	{
+		//Enable the both Transmitter and Receiver bit fields
+		tempreg |= ((1U << USART_CR1_TE) | (1U << USART_CR1_RE));
+	}
+
+    //Configure the Word length configuration item
+	tempreg |= pUSARTHandle->USART_Config.USART_WordLength <<  USART_CR1_M;
+
+
+    //Configuration of parity control bit fields
+	if (pUSARTHandle->USART_Config.USART_ParityControl == USART_PARITY_EN_EVEN)
+	{
+		//Enable the parity control
+		tempreg |= ( 1U << USART_CR1_PCE);
+
+		/* Implement the code to Enable EVEN parity
+		 * Not required because by default EVEN parity will be selected
+		 * once you enable the parity control */
+
+	}
+	else if (pUSARTHandle->USART_Config.USART_ParityControl == USART_PARITY_EN_ODD)
+	{
+		//Enable the parity control
+	    tempreg |= (1U << USART_CR1_PCE);
+
+	    //Enable ODD parity
+	    tempreg |= (1U << USART_CR1_PS);
+	}
+
+   //Program the CR1 register
+	pUSARTHandle->pUSARTx->CR1 = tempreg;
+
+/******************************** Configuration of CR2******************************************/
+
+	tempreg = 0U;
+
+	//Configure the number of stop bits inserted during USART frame transmission
+	tempreg |= pUSARTHandle->USART_Config.USART_NoOfStopBits << USART_CR2_STOP;
+
+	//Program the CR2 register
+	pUSARTHandle->pUSARTx->CR2 = tempreg;
+
+/******************************** Configuration of CR3******************************************/
+
+	tempreg = 0U;
+
+	//Configuration of USART hardware flow control
+	if ( pUSARTHandle->USART_Config.USART_HWFlowControl == USART_HW_FLOW_CTRL_CTS)
+	{
+		//Enable CTS flow control
+		tempreg |= (1U << USART_CR3_CTSE);
+
+
+	}
+	else if (pUSARTHandle->USART_Config.USART_HWFlowControl == USART_HW_FLOW_CTRL_RTS)
+	{
+		//Enable RTS flow control
+		tempreg |= (1U << USART_CR3_RTSE);
+
+	}
+	else if (pUSARTHandle->USART_Config.USART_HWFlowControl == USART_HW_FLOW_CTRL_CTS_RTS)
+	{
+		//Enable both CTS and RTS Flow control
+		tempreg |= ((1U << USART_CR3_CTSE) | (1U << USART_CR3_RTSE));
+	}
+
+	//Program the CR3 register
+	pUSARTHandle->pUSARTx->CR3 = tempreg;
+
+/******************************** Configuration of BRR(Baudrate register)******************************************/
+
+	//Implement the code to configure the baud rate
+	//We will cover this in future.
+
+}
+
+
+
+/*********************************************************************
  * @fn                - USART_DeInit
  *
  * @brief             - Reset the selected USART peripheral registers
