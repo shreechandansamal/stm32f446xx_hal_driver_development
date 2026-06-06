@@ -33,9 +33,6 @@ sources.mk
 # STM32CubeIDE generated files
 # ========================
 *.launch
-.settings/
-.cproject
-.project
 
 # ========================
 # OS junk
