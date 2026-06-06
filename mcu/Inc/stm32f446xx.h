@@ -928,6 +928,77 @@ _Static_assert(sizeof(USART_RegDef_t) == 0x1C, "USART_RegDef struct size mismatc
 
 
 /*********************************************************************
+ * Bit Position Definition of USART Peripheral
+ *********************************************************************/
+/*
+ * Bit position definition USART_CR1
+ */
+#define USART_CR1_SBK					0U
+#define USART_CR1_RWU					1U
+#define USART_CR1_RE					2U
+#define USART_CR1_TE					3U
+#define USART_CR1_IDLEIE				4U
+#define USART_CR1_RXNEIE				5U
+#define USART_CR1_TCIE					6U
+#define USART_CR1_TXEIE					7U
+#define USART_CR1_PEIE					8U
+#define USART_CR1_PS					9U
+#define USART_CR1_PCE					10U
+#define USART_CR1_WAKE					11U
+#define USART_CR1_M 					12U
+#define USART_CR1_UE					13U
+#define USART_CR1_OVER8					15U
+
+/*
+ * Bit position definition USART_CR2
+ */
+#define USART_CR2_ADD					0U
+#define USART_CR2_LBDL  				5U
+#define USART_CR2_LBDIE					6U
+#define USART_CR2_LBCL					8U
+#define USART_CR2_CPHA					9U
+#define USART_CR2_CPOL					10U
+#define USART_CR2_CLKEN					11U
+#define USART_CR2_STOP 					12U
+#define USART_CR2_LINEN					14U
+
+/*
+ * Bit position definition USART_CR3
+ */
+#define USART_CR3_EIE					0U
+#define USART_CR3_IREN					1U
+#define USART_CR3_IRLP					2U
+#define USART_CR3_HDSEL					3U
+#define USART_CR3_NACK  				4U
+#define USART_CR3_SCEN  				5U
+#define USART_CR3_DMAR					6U
+#define USART_CR3_DMAT					7U
+#define USART_CR3_RTSE					8U
+#define USART_CR3_CTSE					9U
+#define USART_CR3_CTSIE					10U
+#define USART_CR3_ONEBIT				11U
+
+/*
+ * Bit position definition USART_SR1
+ */
+#define USART_SR_PE  					0U
+#define USART_SR_FE  					1U
+#define USART_SR_NF  					2U
+#define USART_SR_ORE    				3U
+#define USART_SR_IDLE   				4U
+#define USART_SR_RXNE  					5U
+#define USART_SR_TC  					6U
+#define USART_SR_TXE  					7U
+#define USART_SR_LBD  					8U
+#define USART_SR_CTS  					9U
+
+
+
+
+
+
+
+/*********************************************************************
  * Some Generic Macros
  *********************************************************************/
 #define ENABLE              			1U
