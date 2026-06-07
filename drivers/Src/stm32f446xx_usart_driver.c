@@ -9,6 +9,83 @@
 
 
 
+/*********************************************************************
+ * @fn      		  - USART_SetBaudRate
+ *
+ * @brief             -
+ *
+ * @param[in]         - pUSARTx  : Base address of the USART peripheral
+ * @param[in]         - BaudRate
+ *
+ * @return            - none
+ *
+ * @Note              -
+
+ */
+void USART_SetBaudRate(USART_RegDef_t *pUSARTx,
+					   uint32_t BaudRate)
+{
+
+	//Variable to hold the APB clock
+	uint32_t PCLKx;
+
+	uint32_t usartdiv;
+
+	//variables to hold Mantissa and Fraction values
+	uint32_t M_part,F_part;
+
+  uint32_t tempreg = 0U;
+
+  //Get the value of APB bus clock in to the variable PCLKx
+  if(pUSARTx == USART1 || pUSARTx == USART6)
+  {
+	   //USART1 and USART6 are hanging on APB2 bus
+	   PCLKx = RCC_GetPCLK2Value();
+  }else
+  {
+	   PCLKx = RCC_GetPCLK1Value();
+  }
+
+  //Check for OVER8 configuration bit
+  if(pUSARTx->CR1 & (1U << USART_CR1_OVER8))
+  {
+	   //OVER8 = 1 , over sampling by 8
+	   usartdiv = ((25U * PCLKx) / (2U * BaudRate));
+  }else
+  {
+	   //over sampling by 16
+	   usartdiv = ((25U * PCLKx) / (4U * BaudRate));
+  }
+
+  //Calculate the Mantissa part
+  M_part = usartdiv / 100U;
+
+  //Place the Mantissa part in appropriate bit position . refer USART_BRR
+  tempreg |= M_part << 4U;
+
+  //Extract the fraction part
+  F_part = (usartdiv - (M_part * 100U));
+
+  //Calculate the final fractional
+  if(pUSARTx->CR1 & (1U << USART_CR1_OVER8))
+   {
+	  //OVER8 = 1 , over sampling by 8
+	  F_part = ((( F_part * 8U) + 50U) / 100U) & ((uint8_t)0x07U);
+
+   }else
+   {
+	   //over sampling by 16
+	   F_part = ((( F_part * 16U) + 50U) / 100U) & ((uint8_t)0x0FU);
+
+   }
+
+  //Place the fractional part in appropriate bit position . refer USART_BRR
+  tempreg |= F_part;
+
+  //copy the value of tempreg in to BRR register
+  pUSARTx->BRR = tempreg;
+}
+
 
 
 /*********************************************************************
