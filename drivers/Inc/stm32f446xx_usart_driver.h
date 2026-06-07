@@ -95,6 +95,29 @@ typedef struct
 
 
 
+
+/*********************************************************************
+ * @I2C_Application_Events
+ *********************************************************************/
+#define USART_EV_TX_CMPLT   				0U
+#define	USART_EV_RX_CMPLT   				1U
+#define	USART_EV_IDLE      					2U
+#define	USART_EV_CTS       					3U
+#define	USART_EV_PE        					4U
+
+
+
+
+/*********************************************************************
+ * @I2C_Application_Errors
+ *********************************************************************/
+#define	USART_ER_FE     					5U
+#define	USART_ER_NF    	 					6U
+#define	USART_ER_ORE    					7U
+
+
+
+
 /*********************************************************************
  * @USART_Mode
  *********************************************************************/
@@ -258,7 +281,7 @@ uint8_t USART_GetFlagStatus(USART_RegDef_t *pUSARTx,
 						  	uint8_t FlagName);
 
 void USART_ClearFlag(USART_RegDef_t *pUSARTx,
-					 uint8_t FlagName);
+					 uint32_t FlagName);
 
 void USART_SetBaudRate(USART_RegDef_t *pUSARTx,
 					   uint32_t BaudRate);
