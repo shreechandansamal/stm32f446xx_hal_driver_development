@@ -774,6 +774,19 @@ _Static_assert(sizeof(USART_RegDef_t) == 0x1C, "USART_RegDef struct size mismatc
 
 
 
+/*
+ * IRQ(Interrupt Request) Numbers of UART in STM32F446xx MCU
+ */
+#define IRQ_NO_USART1					37U		/*!< USART1 global interrupt number */
+#define IRQ_NO_USART2					38U		/*!< USART2 global interrupt number */
+#define IRQ_NO_USART3					39U		/*!< USART3 global interrupt number */
+#define IRQ_NO_UART4					52U		/*!< UART4 global interrupt number */
+#define IRQ_NO_UART5					53U		/*!< UART5 global interrupt number */
+#define IRQ_NO_USART6					71U		/*!< USART6 global interrupt number */
+
+
+
+
 /*********************************************************************
  * Priority Levels (Processor Specific)
  *********************************************************************/
