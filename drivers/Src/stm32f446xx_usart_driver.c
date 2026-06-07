@@ -32,7 +32,7 @@ void USART_SetBaudRate(USART_RegDef_t *pUSARTx,
   uint32_t usartdiv;
 
   //variables to hold Mantissa and Fraction values
-  uint32_t M_part,F_part;
+  uint32_t M_part, F_part;
 
   uint32_t tempreg = 0U;
 
@@ -305,7 +305,7 @@ void USART_Init(USART_Handle_t *pUSARTHandle)
 
 	//configure the baud rate
 	USART_SetBaudRate(pUSARTHandle->pUSARTx,
-					  pUSARTHandle->USART_Config.USART_Baud);
+					  pUSARTHandle->USART_Config.USART_BaudRate);
 
 }
 
@@ -572,7 +572,7 @@ void USART_SendData(USART_Handle_t *pUSARTHandle,
 	{
 		//wait until TXE flag is set in the SR
 		while(USART_GetFlagStatus(pUSARTHandle->pUSARTx,
-								  USART_SR_TXE) == RESET);
+								  USART_FLAG_TXE) == RESET);
 
          //Check the USART_WordLength item for 9-bit or 8-bit in a frame
 		if(pUSARTHandle->USART_Config.USART_WordLength == USART_WORDLEN_9BITS)
@@ -607,7 +607,7 @@ void USART_SendData(USART_Handle_t *pUSARTHandle,
 
 	//wait until TC flag is set in the SR
 	while(USART_GetFlagStatus(pUSARTHandle->pUSARTx,
-							  USART_SR_TC) == RESET);
+							  USART_FLAG_TC) == RESET);
 }
 
 
@@ -687,7 +687,7 @@ void USART_ReceiveData(USART_Handle_t *pUSARTHandle,
 	{
 		//wait until RXNE flag is set in the SR
 		while(USART_GetFlagStatus(pUSARTHandle->pUSARTx,
-								  USART_SR_RXNE) == RESET);
+								  USART_FLAG_RXNE) == RESET);
 
 		/* Check the USART_WordLength to decide whether we are going
 		 * to receive 9-bit or 8-bit of data in a frame */
@@ -707,7 +707,7 @@ void USART_ReceiveData(USART_Handle_t *pUSARTHandle,
 			else
 			{
 				//Parity is used, so, 8bits will be of user data and 1-bit is parity
-				 *pRxBuffer = (pUSARTHandle->pUSARTx->DR  & (uint8_t)0xFFU);
+				 *pRxBuffer =  (uint8_t)(pUSARTHandle->pUSARTx->DR  & (uint8_t)0xFFU);
 
 				 //Increment the pRxBuffer
 				 pRxBuffer++;

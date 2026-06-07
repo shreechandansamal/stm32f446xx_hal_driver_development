@@ -165,6 +165,23 @@ typedef struct
 
 
 
+/*********************************************************************
+ * @I2C_Status_Flags
+ *********************************************************************/
+#define USART_FLAG_PE  					(1U << USART_SR_PE)
+#define USART_FLAG_FE  					(1U << USART_SR_FE)
+#define USART_FLAG_NF  					(1U << USART_SR_NF)
+#define USART_FLAG_ORE    				(1U << USART_SR_ORE)
+#define USART_FLAG_IDLE   				(1U << USART_SR_IDLE)
+#define USART_FLAG_RXNE  			    (1U << USART_SR_RXNE)
+#define USART_FLAG_TC  					(1U << USART_SR_TC)
+#define USART_FLAG_TXE  				(1U << USART_SR_TXE)
+#define USART_FLAG_LBD  			    (1U << USART_SR_LBD)
+#define USART_FLAG_CTS  				(1U << USART_SR_CTS)
+
+
+
+
 /**************************************************************************************************************
  *                                    APIs Supported By This Driver
  *
@@ -243,7 +260,8 @@ uint8_t USART_GetFlagStatus(USART_RegDef_t *pUSARTx,
 void USART_ClearFlag(USART_RegDef_t *pUSARTx,
 					 uint8_t FlagName);
 
-
+void USART_SetBaudRate(USART_RegDef_t *pUSARTx,
+					   uint32_t BaudRate);
 
 
 /*********************************************************************
