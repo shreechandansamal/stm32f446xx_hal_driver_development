@@ -63,12 +63,35 @@ typedef struct
  *********************************************************************/
 typedef struct
 {
-	USART_RegDef_t *pUSARTx;		/*!< Holds the base address of the
-									     USART peripheral (USART1/
-									     UART4...) */
-	USART_Config_t USART_Config;	/*!< Holds USART configuration
-	 	 	 	 	 	 	 	 	 	 settings */
+	USART_RegDef_t *pUSARTx;	  /*!< Holds the base address of the
+									   USART peripheral (USART1/
+									   UART4...) */
+	USART_Config_t USART_Config;  /*!< Holds USART configuration
+	 	 	 	 	 	 	 	 	   settings */
+	uint8_t *pTxBuffer;			  /*!< Pointer to application transmit
+									   buffer */
+	uint8_t *pRxBuffer;			  /*!< Pointer to application receive
+									   buffer */
+	uint32_t TxLen;				  /*!< Stores remaining number of bytes
+									   to transmit */
+	uint32_t RxLen;				  /*!< Stores remaining number of bytes
+									   to receive */
+	uint8_t TxBusyState;		  /*!< Stores current transmission state */
+	uint8_t RxBusyState;		  /*!< Stores current reception state */
 }USART_Handle_t;
+
+
+
+
+
+
+
+/*********************************************************************
+ * @USART_Application_States
+ *********************************************************************/
+#define USART_BUSY_IN_TX 					2U
+#define USART_BUSY_IN_RX 					1U
+#define USART_READY 						0U
 
 
 
