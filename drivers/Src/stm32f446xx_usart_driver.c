@@ -6,7 +6,7 @@
  */
 
 #include "stm32f446xx_usart_driver.h"
-
+#include "stm32f446xx_rcc_driver.h"
 
 
 /*********************************************************************
@@ -26,13 +26,13 @@ void USART_SetBaudRate(USART_RegDef_t *pUSARTx,
 					   uint32_t BaudRate)
 {
 
-	//Variable to hold the APB clock
-	uint32_t PCLKx;
+  //Variable to hold the APB clock
+  uint32_t PCLKx;
 
-	uint32_t usartdiv;
+  uint32_t usartdiv;
 
-	//variables to hold Mantissa and Fraction values
-	uint32_t M_part,F_part;
+  //variables to hold Mantissa and Fraction values
+  uint32_t M_part,F_part;
 
   uint32_t tempreg = 0U;
 
@@ -303,8 +303,9 @@ void USART_Init(USART_Handle_t *pUSARTHandle)
 
 /******************************** Configuration of BRR(Baudrate register)******************************************/
 
-	//Implement the code to configure the baud rate
-	//We will cover this in future.
+	//configure the baud rate
+	USART_SetBaudRate(pUSARTHandle->pUSARTx,
+					  pUSARTHandle->USART_Config.USART_Baud);
 
 }
 

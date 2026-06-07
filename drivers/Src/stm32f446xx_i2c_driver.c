@@ -6,9 +6,8 @@
  */
 
 #include "stm32f446xx_i2c_driver.h"
+#include "stm32f446xx_rcc_driver.h"
 
-uint16_t AHB_PreScaler[8U] = {2U, 4U, 8U, 16U, 64U, 128U, 256U, 512U};
-uint8_t APB1_PreScaler[4U] = { 2U, 4U, 8U, 16U};
 
 /********************************************************************
  * @Note- private helper macro section
@@ -31,8 +30,6 @@ uint8_t APB1_PreScaler[4U] = { 2U, 4U, 8U, 16U};
  * so if application tries to call them, then compiler will issue an
  * error.
  */
-static uint32_t RCC_GetPCLK1Value(void);
-static uint32_t  RCC_GetPLLOutputClock(void);
 static void I2C_GenerateStartCondition(I2C_RegDef_t *pI2Cx);
 static void I2C_ExecuteAddressPhase(I2C_RegDef_t *pI2Cx,
 							        uint8_t SlaveAddr,
@@ -119,156 +116,6 @@ void I2C_PeriClockControl(I2C_RegDef_t *pI2Cx,
             I2C3_PCLK_DI();
         }
     }
-}
-
-
-
-/*********************************************************************
- * @fn      		  - RCC_GetPCLK1Value
- *
- * @brief             - Calculate the speed of the PLL
- *
- * @param[in]         -
- *
- * @return            -
- *
- * @Note              - future implementation
- *
- */
-static uint32_t  RCC_GetPLLOutputClock()
-{
-	return 0;
-}
-
-
-
-/*********************************************************************
- * @fn                - RCC_GetPCLK1Value
- *
- * @brief             - Calculate the current APB1 peripheral clock
- *                      frequency.
- *
- * @param[in]         - none
- *
- * @return            - APB1 peripheral clock frequency in Hertz (Hz)
- *
- * @Note              -
- *                      1. This function determines the clock source
- *                         currently selected as the System Clock
- *                         (SYSCLK).
- *
- *                      2. Supported clock sources:
- *
- *                           - HSI (High-Speed Internal Oscillator)
- *                           - HSE (High-Speed External Oscillator)
- *                           - PLL Output Clock
- *
- *                      3. The function reads the SWS bits in the
- *                         RCC_CFGR register to identify the active
- *                         system clock source.
- *
- *                      4. After determining SYSCLK frequency, the
- *                         configured AHB prescaler is applied to
- *                         calculate the HCLK frequency.
- *
- *                      5. The configured APB1 prescaler is then
- *                         applied to obtain the final PCLK1
- *                         frequency.
- *
- *                      6. Clock relationship:
- *
- *                              SYSCLK
- *                                 |
- *                                 v
- *                               AHB Prescaler
- *                                 |
- *                                 v
- *                                HCLK
- *                                 |
- *                                 v
- *                              APB1 Prescaler
- *                                 |
- *                                 v
- *                               PCLK1
- *
- *                      7. PCLK1 is used by peripherals connected
- *                         to the APB1 bus such as:
- *
- *                           - I2C1 / I2C2 / I2C3
- *                           - USART2
- *                           - SPI2 / SPI3
- *                           - TIM2-TIM7
- *                           - Other APB1 peripherals
- *
- *                      8. This function is commonly used by
- *                         peripheral drivers when timing-related
- *                         register values must be calculated
- *                         dynamically.
- *
- *                      9. Example use cases:
- *
- *                           - I2C CCR calculation
- *                           - I2C TRISE calculation
- *                           - USART baud rate calculation
- *                           - Timer frequency calculations
- *
- *                     10. PLL clock calculation is delegated to
- *                         RCC_GetPLLOutputClock().
- *
- *                     11. The returned frequency reflects the
- *   					   current RCC clock configuration at
- *   					   runtime and may change if the system
- *   					   clock configuration is modified.
- *
- */
-static uint32_t RCC_GetPCLK1Value(void)
-{
-	uint32_t pclk1,SystemClk;
-	uint16_t ahbp,apb1p;
-	uint8_t clksrc,temp;
-
-	//test for the System Clock Source
-	clksrc = ((RCC->CFGR >> 2U) & 0x3U);
-
-	if(clksrc == 0U)
-	{
-		SystemClk = 16000000UL;
-	}else if(clksrc == 1U)
-	{
-		SystemClk = 8000000UL;
-	}else if (clksrc == 2U)
-	{
-		//skipped this because PLL is not required now
-		SystemClk = RCC_GetPLLOutputClock();
-	}
-
-	//test for AHB Pre-Scaler
-	temp = ((RCC->CFGR >> 4U) & 0xFU);
-
-	if(temp < 8U) //system clock not divided
-	{
-		ahbp = 1U;
-	}else
-	{
-		ahbp = AHB_PreScaler[temp - 8U];
-	}
-
-
-
-	//test for APB1 Pre-Scaler
-	temp = ((RCC->CFGR >> 10U) & 0x7U);
-
-	if(temp < 4U) //system clock not divided
-	{
-		apb1p = 1U;
-	}else
-	{
-		apb1p = APB1_PreScaler[temp - 4U];
-	}
-
-	pclk1 =  (SystemClk / ahbp) / apb1p;
-
-	return pclk1;
 }
 
 
