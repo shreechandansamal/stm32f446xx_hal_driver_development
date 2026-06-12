@@ -7,7 +7,24 @@
 
 #include "stm32f446xx_usart_driver.h"
 #include "stm32f446xx_rcc_driver.h"
-#include <stdio.h>
+
+
+
+/********************************************************************
+ * @Note- private helper function section
+ *
+ * @brief  - don't declare these prototypes in the header because these are private functions
+ *  		 and we don't want to expose it to user application
+ *
+ * use static keyword to indicate these are private helper function, so if application tries
+ * to call them, then compiler will issue an error.
+ */
+static void USART_FlushReceiveData(USART_RegDef_t *pUSARTx);
+
+/***********************************************************************/
+
+
+
 
 /*********************************************************************
  * @fn      		  - USART_SetBaudRate
@@ -543,6 +560,36 @@ void USART_PeripheralControl(USART_RegDef_t *pUSARTx,
 
 
 /*********************************************************************
+ * @fn      		  - USART_FlushReceiveData
+ *
+ * @brief             - helps clear RXNE, made by starting garbage
+ * 						data in the DR.
+ *
+ * @param[in]         - pUSARTx : Pointer to the target USART peripheral
+ *                                instance.
+ *
+ * @return            - none
+ *
+ * @Note              - Read the DR for the first garbage value exist
+ * 						in the DR which makes RXNE == SET in the
+ * 						starting, by reading the DR it erase that
+ * 						garbage value and clear or RESET the RXNE.
+ *
+ */
+static void USART_FlushReceiveData(USART_RegDef_t *pUSARTx)
+{
+    volatile uint32_t dummy;
+
+    while(pUSARTx->SR & (1U << USART_SR_RXNE))
+    {
+        dummy = pUSARTx->DR;
+        (void)dummy;
+    }
+}
+
+
+
+/*********************************************************************
  * @fn      		  - USART_SendData
  *
  * @brief             - USART Send Data using polling (blocking)
@@ -771,6 +818,9 @@ uint8_t USART_ReceiveDataIT(USART_Handle_t *pUSARTHandle,
 
 	if(rxstate != USART_BUSY_IN_RX)
 	{
+		//this erase the first byte garbage data and clears RXNE
+		USART_FlushReceiveData(pUSARTHandle->pUSARTx);
+
 		pUSARTHandle->RxLen = Len;
 		pUSARTHandle->pRxBuffer = pRxBuffer;
 		pUSARTHandle->RxBusyState = USART_BUSY_IN_RX;
