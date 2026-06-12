@@ -10,37 +10,32 @@
 
 #include "stm32f446xx.h"
 
+
 /*********************************************************************
  * @USART Configuration Structure
  *********************************************************************
  * This structure is used to configure the USART peripheral.
  *
- * User application fills this structure and passes it to USART_Init().
+ * The application fills this structure and passes it to USART_Init().
  *
- * Each member of this structure represents one configurable feature
- * of the USART peripheral such as:
+ * Each member controls a specific feature of USART such as:
  *
- *    - USART Mode (Tx, Rx, TxRx)
- *    - USART BaudRate (Bps)
- *    - USART No Of Stop Bits(0.5, 1, 1.5, 2)
- *    - USART Word Length (8bits, 9bits)
- *    - USART Parity Control (no, even, odd)
- *    - USART HW Flow Control
+ *    - Mode (TX / RX / TXRX)
+ *    - BaudRate
+ *    - Number of Stop Bits
+ *    - Word Length
+ *    - Parity Control
+ *    - Hardware Flow Control
  *
  *********************************************************************/
 typedef struct
 {
-	uint8_t USART_Mode;				/*!< Holds USART mode settings */
-	uint32_t USART_BaudRate;		/*!< Holds USART baud rate
-	 	 	 	 	 	 	 	 	 	 settings */
-	uint8_t USART_NoOfStopBits;		/*!< Holds USART number of stop
-	 	 	 	 	 	 	 	 	 	 bits settings */
-	uint8_t USART_WordLength;		/*!< Holds USART word length
-	 	 	 	 	 	 	 	 	 	 settings */
-	uint8_t USART_ParityControl;	/*!< Holds USART parity bit
-	 	 	 	 	 	 	 	 	 	 control settings */
-	uint8_t USART_HWFlowControl;	/*!< Holds USART hardware flow
-	 	 	 	 	 	 	 	 	 	 control settings */
+	uint8_t USART_Mode;				/*!< USART mode configuration */
+	uint32_t USART_BaudRate;		/*!< USART communication baud rate */
+	uint8_t USART_NoOfStopBits;		/*!< Number of stop bits */
+	uint8_t USART_WordLength;		/*!< Word length (8/9 bits) */
+	uint8_t USART_ParityControl;	/*!< Parity configuration */
+	uint8_t USART_HWFlowControl;	/*!< RTS/CTS hardware flow control */
 }USART_Config_t;
 
 
@@ -48,46 +43,34 @@ typedef struct
 /*********************************************************************
  * @USART Handle Structure
  *********************************************************************
- * This structure is used by the USART driver to manage:
+ * This structure acts as a handle for a USART peripheral instance.
  *
- *    - USART peripheral information
- *    - USART configuration settings
+ * It is used internally by the driver to manage:
  *
- * This structure acts like a software object/handle for one USART
- * peripheral instance.
- *
- * Example:
- *
- *    USART_Handle_t USART_Handle;
+ *    - USART peripheral base address
+ *    - Configuration settings
+ *    - Tx/Rx buffers
+ *    - Tx/Rx lengths
+ *    - Busy states
  *
  *********************************************************************/
 typedef struct
 {
-	USART_RegDef_t *pUSARTx;	  /*!< Holds the base address of the
-									   USART peripheral (USART1/
-									   UART4...) */
-	USART_Config_t USART_Config;  /*!< Holds USART configuration
-	 	 	 	 	 	 	 	 	   settings */
-	uint8_t *pTxBuffer;			  /*!< Pointer to application transmit
-									   buffer */
-	uint8_t *pRxBuffer;			  /*!< Pointer to application receive
-									   buffer */
-	uint32_t TxLen;				  /*!< Stores remaining number of bytes
-									   to transmit */
-	uint32_t RxLen;				  /*!< Stores remaining number of bytes
-									   to receive */
-	uint8_t TxBusyState;		  /*!< Stores current transmission state */
-	uint8_t RxBusyState;		  /*!< Stores current reception state */
+	USART_RegDef_t *pUSARTx;	  /*!< Base address of USART peripheral */
+	USART_Config_t USART_Config;  /*!< USART configuration structure */
+	uint8_t *pTxBuffer;		  	  /*!< Pointer to Tx buffer */
+	uint8_t *pRxBuffer;		  	  /*!< Pointer to Rx buffer */
+	uint32_t TxLen;			  	  /*!< Remaining Tx length */
+	uint32_t RxLen;			  	  /*!< Remaining Rx length */
+	uint8_t TxBusyState;		  /*!< Tx state (READY/BUSY) */
+	uint8_t RxBusyState;		  /*!< Rx state (READY/BUSY) */
 }USART_Handle_t;
 
 
 
 
-
-
-
 /*********************************************************************
- * @USART_Application_States
+ * @USART Application States
  *********************************************************************/
 #define USART_BUSY_IN_TX 					2U
 #define USART_BUSY_IN_RX 					1U
@@ -95,25 +78,26 @@ typedef struct
 
 
 
-
 /*********************************************************************
- * @I2C_Application_Events
+ * @USART Application Events
+ *********************************************************************
+ * These events are used in callback mechanism to notify the
+ * application layer about USART operations.
  *********************************************************************/
 #define USART_EV_TX_CMPLT   				0U
-#define	USART_EV_RX_CMPLT   				1U
-#define	USART_EV_IDLE      					2U
-#define	USART_EV_CTS       					3U
-#define	USART_EV_PE        					4U
-
+#define USART_EV_RX_CMPLT   				1U
+#define USART_EV_IDLE      					2U
+#define USART_EV_CTS       					3U
+#define USART_EV_PE        					4U
 
 
 
 /*********************************************************************
- * @I2C_Application_Errors
+ * @USART Error Events
  *********************************************************************/
-#define	USART_ER_FE     					5U
-#define	USART_ER_NF    	 					6U
-#define	USART_ER_ORE    					7U
+#define USART_ER_FE     					5U
+#define USART_ER_NF    	 					6U
+#define USART_ER_ORE    					7U
 
 
 
@@ -129,7 +113,7 @@ typedef struct
 
 
 /*********************************************************************
- * @USART_BaudRate
+ * @USART_BaudRate (Standard Values)
  *********************************************************************/
 #define USART_STD_BAUD_1200					1200U
 #define USART_STD_BAUD_2400					2400U
@@ -150,9 +134,9 @@ typedef struct
 /*********************************************************************
  * @USART_ParityControl
  *********************************************************************/
-#define USART_PARITY_EN_ODD   				2U
-#define USART_PARITY_EN_EVEN     			1U
 #define USART_PARITY_DISABLE    			0U
+#define USART_PARITY_EN_EVEN     			1U
+#define USART_PARITY_EN_ODD   				2U
 
 
 
@@ -189,7 +173,9 @@ typedef struct
 
 
 /*********************************************************************
- * @I2C_Status_Flags
+ * @USART Status Flags
+ *********************************************************************
+ * These flags are used with USART_GetFlagStatus().
  *********************************************************************/
 #define USART_FLAG_PE  					(1U << USART_SR_PE)
 #define USART_FLAG_FE  					(1U << USART_SR_FE)
@@ -206,37 +192,29 @@ typedef struct
 
 
 /**************************************************************************************************************
- *                                    APIs Supported By This Driver
- *
- *              For detailed information about each API,
- *              refer to the function definitions in source file.
- *
+ *                          APIs SUPPORTED BY THIS DRIVER
  **************************************************************************************************************/
 
 
 
-
 /*********************************************************************
- * Peripheral Clock Control APIs
+ * @Peripheral Clock Control
  *********************************************************************/
 void USART_PeriClockControl(USART_RegDef_t *pUSARTx,
 						    uint8_t EnorDi);
 
 
 
-
 /*********************************************************************
- * Initialization and De-Initialization APIs
+ * @Init and DeInit APIs
  *********************************************************************/
 void USART_Init(USART_Handle_t *pUSARTHandle);
-
 void USART_DeInit(USART_RegDef_t *pUSARTx);
 
 
 
-
 /*********************************************************************
- * Data Transmission and Reception APIs
+ * @Data Send and Receive (Blocking APIs)
  *********************************************************************/
 void USART_SendData(USART_Handle_t *pUSARTHandle,
 					uint8_t *pTxBuffer,
@@ -246,6 +224,11 @@ void USART_ReceiveData(USART_Handle_t *pUSARTHandle,
 					   uint8_t *pRxBuffer,
 					   uint32_t Len);
 
+
+
+/*********************************************************************
+ * @Data Send and Receive (Interrupt APIs)
+ *********************************************************************/
 uint8_t USART_SendDataIT(USART_Handle_t *pUSARTHandle,
 						 uint8_t *pTxBuffer,
 						 uint32_t Len);
@@ -256,9 +239,8 @@ uint8_t USART_ReceiveDataIT(USART_Handle_t *pUSARTHandle,
 
 
 
-
 /*********************************************************************
- * IRQ Configuration and ISR Handling APIs
+ * @IRQ Configuration and Handling
  *********************************************************************/
 void USART_IRQInterruptConfig(uint8_t IRQNumber,
 							  uint8_t EnOrDi);
@@ -270,9 +252,8 @@ void USART_IRQHandling(USART_Handle_t *pUSARTHandle);
 
 
 
-
 /*********************************************************************
- * USART Peripheral Control APIs
+ * @USART Peripheral Control APIs
  *********************************************************************/
 void USART_PeripheralControl(USART_RegDef_t *pUSARTx,
 	    					 uint8_t EnorDi);
@@ -287,8 +268,16 @@ void USART_SetBaudRate(USART_RegDef_t *pUSARTx,
 					   uint32_t BaudRate);
 
 
+
 /*********************************************************************
- * I2C Application Callback
+ * @Application Callback
+ *********************************************************************
+ * Application can override this function to handle USART events:
+ *
+ *    - TX complete
+ *    - RX complete
+ *    - Error conditions
+ *
  *********************************************************************/
 void USART_ApplicationEventCallback(USART_Handle_t *pUSARTHandle,
 									uint8_t AppEvent);
