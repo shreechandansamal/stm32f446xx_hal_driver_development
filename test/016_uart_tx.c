@@ -15,7 +15,6 @@
  *
  *      USART2 Pin Configuration
  *      ======================
- *      RX --> PA3
  *      TX --> PA2
  *
  *      ALT function mode: AF7
@@ -66,12 +65,6 @@ void USART2_GPIOInit(void)
 	//USART2 TX
 	USART2Pins.GPIO_PinConfig.GPIO_PinNumber  = GPIO_PIN_NO_2;
 	GPIO_Init(&USART2Pins);
-
-	//USART2 RX
-//	USART2Pins.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_3;
-//	GPIO_Init(&USART2Pins);
-
-
 }
 
 
