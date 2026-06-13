@@ -7,13 +7,15 @@ This project focuses on low-level register programming, driver abstraction, inte
 
 ## 📊 Current Status
 
-* Version: **v0.3.0**
+* Version: **v0.4.0**
 * Status:
-
   * ✅ GPIO Driver Complete
   * ✅ SPI Driver Complete (Polling + Interrupt APIs)
   * ✅ I2C Driver Complete (Polling + Interrupt APIs)
-* Next Target: **USART Driver**
+  * ✅ USART/UART Driver Complete (Polling + Interrupt APIs)
+
+* Next Target: **TIM Driver**
+
 ---
 
 ## 📌 Overview
@@ -36,7 +38,6 @@ No HAL or external abstraction libraries are used.
 # ✅ v0.1.0 - GPIO Driver
 
 ### GPIO Features
-
 * Peripheral Clock Control APIs
 * GPIO Initialization APIs
 * Input / Output Mode Configuration
@@ -53,7 +54,6 @@ No HAL or external abstraction libraries are used.
 # ✅ v0.2.0 - SPI Driver
 
 ### SPI Core Features
-
 * SPI Peripheral Initialization
 * Master / Slave Mode
 * Full Duplex / Half Duplex / Simplex RX Only
@@ -64,20 +64,14 @@ No HAL or external abstraction libraries are used.
 * Configurable Baud Rate Prescaler
 * 8-bit and 16-bit Data Frame Support
 
----
-
 ### SPI Polling APIs
-
 * Blocking Transmit API
 * Blocking Receive API
 * Full-Duplex Transmit/Receive API
 * Busy Flag Handling
 * Proper TXE/RXNE Synchronization
 
----
-
 ### SPI Interrupt APIs
-
 * Interrupt-Based Transmission
 * Interrupt-Based Reception
 * TXE Interrupt Handling
@@ -87,10 +81,7 @@ No HAL or external abstraction libraries are used.
 * NVIC Priority Configuration APIs
 * Application Callback Mechanism
 
----
-
 ### SPI Driver Improvements
-
 * Proper Volatile Register Access
 * Explicit 8-bit and 16-bit Register Access Handling
 * Even-Length Validation for 16-bit Transfers
@@ -103,7 +94,6 @@ No HAL or external abstraction libraries are used.
 # ✅ v0.3.0 - I2C Driver
 
 ### I2C Core Features
-
 * I2C Peripheral Initialization
 * Peripheral Clock Management
 * Peripheral Enable/Disable Control
@@ -119,10 +109,7 @@ No HAL or external abstraction libraries are used.
 * CCR Calculation
 * TRISE Calculation
 
----
-
 ### I2C Polling APIs
-
 * Master Transmit (Blocking)
 * Master Receive (Blocking)
 * Single-Byte Reception Handling
@@ -134,10 +121,7 @@ No HAL or external abstraction libraries are used.
 * BTF Synchronization
 * Communication Completion Handling
 
----
-
 ### I2C Interrupt APIs
-
 * Master Transmit (Interrupt Mode)
 * Master Receive (Interrupt Mode)
 * Event Interrupt Handling
@@ -149,10 +133,7 @@ No HAL or external abstraction libraries are used.
 * BTF Event Handling
 * STOPF Event Handling
 
----
-
 ### I2C Error Handling
-
 * Bus Error (BERR)
 * Arbitration Lost (ARLO)
 * Acknowledge Failure (AF)
@@ -160,10 +141,7 @@ No HAL or external abstraction libraries are used.
 * Timeout Detection
 * Application Error Callback Notification
 
----
-
 ### I2C Slave Features
-
 * Slave Transmit Support
 * Slave Receive Support
 * Slave Event Callback Mechanism
@@ -171,10 +149,7 @@ No HAL or external abstraction libraries are used.
 * Data Receive Callback
 * STOP Detection Callback
 
----
-
 ### I2C Driver Improvements
-
 * STM32-Compliant ADDR Flag Clearing
 * Proper Single-Byte Receive Sequence
 * Correct ACK/NACK Timing Control
@@ -186,11 +161,76 @@ No HAL or external abstraction libraries are used.
 
 ---
 
+# ✅ v0.4.0 - USART / UART Driver
+
+### USART Core Features
+* USART Peripheral Initialization
+* Peripheral Clock Management
+* Peripheral Enable/Disable Control
+* Baud Rate Configuration
+* APB1/APB2 Clock Based Baud Rate Calculation
+* Oversampling by 8 Support
+* Oversampling by 16 Support
+* TX Only / RX Only / TX-RX Modes
+* Configurable Stop Bits
+* 8-bit Word Length Support
+* 9-bit Word Length Support
+* Even Parity Support
+* Odd Parity Support
+* CTS Flow Control
+* RTS Flow Control
+* CTS/RTS Combined Flow Control
+
+### USART Polling APIs
+* Blocking Transmission API
+* Blocking Reception API
+* TXE Flag Synchronization
+* RXNE Flag Synchronization
+* Transmission Complete (TC) Handling
+* 8-bit Data Transfers
+* 9-bit Data Transfers
+* Parity-Aware Data Handling
+
+### USART Interrupt APIs
+* Interrupt-Based Transmission
+* Interrupt-Based Reception
+* TXE Interrupt Handling
+* TC Interrupt Handling
+* RXNE Interrupt Handling
+* IRQ Enable/Disable APIs
+* NVIC Priority Configuration APIs
+* Application Callback Mechanism
+* Non-Blocking Communication Support
+
+### USART Event Handling
+* Transmission Complete Event
+* Reception Complete Event
+* CTS Event Detection
+* IDLE Line Detection Event
+
+### USART Error Handling
+* Overrun Error (ORE)
+* Framing Error (FE)
+* Noise Error (NF)
+* Error Callback Notification
+
+### USART Driver Improvements
+* Accurate BRR Register Calculation
+* APB1/APB2 Aware Baud Generation
+* Support for Oversampling by 8 and 16
+* Proper 8-bit and 9-bit Data Access
+* Safe Interrupt State Management
+* Automatic Interrupt Disable on Completion
+* RXNE Flush Utility for Stale Data Handling
+* Enhanced Register-Level Documentation
+
+---
+
 ## 🏗️ Project Structure
 
 ```text
 .
-├── drivers/        → Peripheral drivers (GPIO, SPI, I2C, USART, etc.)
+├── drivers/        → Peripheral drivers (GPIO, SPI, I2C, USART, TIM, etc.)
 ├── bsp/            → Board Support Package (Nucleo-F446RE)
 ├── applications/   → Application layer code
 ├── devices/        → External device drivers
@@ -210,7 +250,6 @@ No HAL or external abstraction libraries are used.
 * Learn industrial embedded driver design
 
 Prepare drivers for:
-
 * GPIO
 * SPI
 * I2C
@@ -219,11 +258,9 @@ Prepare drivers for:
 * PWM
 * ADC
 * CAN
-* Low Power Modes
 * DMA
 * RTOS Integration
 * Bootloader Development
-* More...
 
 ---
 
@@ -235,13 +272,13 @@ This project follows **Semantic Versioning**:
 MAJOR.MINOR.PATCH
 ```
 
-| Version | Description                           |
-| ------- | ------------------------------------- |
-| v0.1.0  | GPIO Driver Complete                  |
-| v0.2.0  | SPI Driver Added                      |
-| v0.3.0  | I2C Driver Added                      |
-| v0.x.x  | Development Phase                     |
-| v1.0.0  | Stable Driver Framework (Future Goal) |
+| Version | Description |
+|----------|-------------|
+| v0.1.0 | GPIO Driver Complete |
+| v0.2.0 | SPI Driver Added |
+| v0.3.0 | I2C Driver Added |
+| v0.4.0 | USART/UART Driver Added |
+| v1.0.0 | Stable Driver Framework (Future Goal) |
 
 ---
 
@@ -250,8 +287,8 @@ MAJOR.MINOR.PATCH
 * [x] GPIO Driver
 * [x] SPI Driver
 * [x] I2C Driver
+* [x] USART/UART Driver
 * [ ] SPI Driver Refactor (Industrial-Grade IT/DMA Architecture)
-* [ ] USART Driver
 * [ ] Timer Driver
 * [ ] PWM Driver
 * [ ] ADC Driver
@@ -260,6 +297,7 @@ MAJOR.MINOR.PATCH
 * [ ] Bootloader Development
 
 ---
+
 ## 🧪 Testing
 
 Test applications are available under:
@@ -287,6 +325,8 @@ test
 ├── 013_i2c_master_rx_testing_it.c
 ├── 014_i2c_slave_tx_string.c
 ├── 015_i2c_slave_tx_string2.c
+├── 016_uart_tx.c
+├── 017_uart_case_exchange.c
 ├── AHT10_I2C.c
 ├── gpio_app_keyboard_test.c
 └── RFID-RC522_SPI.c
@@ -325,6 +365,13 @@ test
 | 015_i2c_slave_tx_string2.c     | Advanced slave transmit testing                                     |
 | AHT10_I2C.c                    | Real sensor interfacing using AHT10 temperature and humidity sensor |
 
+### USART and UART Tests
+
+| Test File                      | Description                                                         |
+| ------------------------------ | ------------------------------------------------------------------- |
+| 016_uart_tx.c                  | polling transmit operation validation                               |
+| 017_uart_case_exchange.c       | interrupt receive operation validation                              |
+
 ### Validation Coverage
 
 #### GPIO
@@ -357,21 +404,26 @@ test
 * Multi-Byte Data Transfers
 * Event and Error Interrupt Validation
 
+#### USART
+* Polling Transmission
+* Polling Reception
+* Interrupt-Based Communication
+* TXE/TC/RXNE Event Handling
+* Parity Handling
+* Error Event Validation
+
 ---
 
 ## 🛠️ Build & Run
 
 ### Toolchain
-
 * ARM GCC
 
 ### IDE
-
 * STM32CubeIDE
 * Makefile-Based Builds Possible
 
 ### Steps
-
 1. Import project into STM32CubeIDE
 2. Build the project
 3. Flash to STM32F446RE board
@@ -386,8 +438,6 @@ test
 ---
 
 ## 📚 Learning Focus
-
-This project focuses on:
 
 * Embedded C Programming
 * Register-Level MCU Control
@@ -410,8 +460,8 @@ This project focuses on:
 * Peripheral State Management
 * SPI Communication Protocol
 * I2C Communication Protocol
+* USART Communication Protocol
 * ACK/NACK Handling
-* Clock Stretching Awareness
 * Hardware/Software Synchronization
 * Embedded API Design
 
@@ -428,4 +478,3 @@ Shree Chandan Samal
 This is a learning-driven project focused on understanding embedded systems deeply through practical driver development.
 
 The codebase will continuously evolve as new peripherals, improved architectures, advanced debugging techniques, and industrial-grade embedded concepts are explored.
-
