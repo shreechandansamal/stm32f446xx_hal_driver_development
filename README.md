@@ -328,6 +328,7 @@ test
 ├── 016_uart_tx.c
 ├── 017_uart_case_exchange.c
 ├── AHT10_I2C.c
+├── rtc_app.c 
 ├── gpio_app_keyboard_test.c
 └── RFID-RC522_SPI.c
 ```
@@ -364,6 +365,7 @@ test
 | 014_i2c_slave_tx_string.c      | Slave transmit functionality                                        |
 | 015_i2c_slave_tx_string2.c     | Advanced slave transmit testing                                     |
 | AHT10_I2C.c                    | Real sensor interfacing using AHT10 temperature and humidity sensor |
+| rtc_app.c                      | Real time clock interfacing using DS1307, bsp, device driver added  |
 
 ### USART and UART Tests
 
