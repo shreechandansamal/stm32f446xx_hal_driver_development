@@ -403,6 +403,7 @@ test
 * ACK/NACK Handling
 * START and Repeated START Sequences
 * Real Sensor Communication (AHT10)
+* Real Time Clock (DS1307)
 * Multi-Byte Data Transfers
 * Event and Error Interrupt Validation
 
