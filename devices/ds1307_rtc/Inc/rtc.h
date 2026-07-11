@@ -8,6 +8,8 @@
 #ifndef DS1307_RTC_INC_RTC_H_
 #define DS1307_RTC_INC_RTC_H_
 
+#include <stdint.h>
+
 /*salve address*/
 #define DS1307_I2C_ADDRESS			0x68
 
